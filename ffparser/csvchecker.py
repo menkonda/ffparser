@@ -94,20 +94,23 @@ class ImpRecFlatFile(CsvFlatFile):
         return self.parse_groups()[id]
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Check a csv file structure')
     parser.add_argument('csv_files', metavar='FILES', nargs='+',
                         help='Files to be checked')
-    parser.add_argument('--config_file', metavar='CONFIG_FILES', help='Configuration file holding the file structures'
+    parser.add_argument('--config_file', metavar='CONFIG_FILE', help='Configuration file containing the file structures.'
+                                                                     ' By default the file is ' + config.CONFIG_FILE
                         , default=config.CONFIG_FILE)
     parser.add_argument('--file_structure', metavar='STRUCT_NAME', help='Name of the file structure to use,'
-                                                                        ' by default will detect'
+                                                                        ' by default csvchecker detects the '
                                                                         'file structure from filename pattern')
+    parser.add_argument('--output-dir', metavar='OUTPUT_DIR', help='Defines the output directory. By default the '
+                                                                         'directory is '
+                                                                   + config.GLOBAL_CONFIG.default_output_directory,
+                        default=config.GLOBAL_CONFIG.default_output_directory)
     parser.add_argument('--no-output', action='store_true', help='If enabled no csv result file')
     parser.add_argument('-v', '--verbose', action='store_true', help='If enabled results will be prompted on screen')
-    parser.add_argument('--output-dir', metavar='OUTPUT_DIR', help='Defines the output directory. By default the'
-                                                                         'directory is ' + config.GLOBAL_CONFIG.default_output_directory,
-                        default=config.GLOBAL_CONFIG.default_output_directory)
+
     args = parser.parse_args()
     # print(args)
 
@@ -135,4 +138,8 @@ if __name__ == "__main__":
         if not args.no_output:
             with open(output_filename, "w", newline='') as output_file:
                 result.to_csv(output_file)
+
+
+if __name__ == "__main__":
+    main()
 
