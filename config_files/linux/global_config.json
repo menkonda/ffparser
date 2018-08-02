@@ -1,0 +1,4 @@
+{
+  "conf_directory" : ".csv_parser",
+  "default_output_directory" : "/tmp/csv_parser_output"
+}
