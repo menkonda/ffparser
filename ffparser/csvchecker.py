@@ -20,7 +20,8 @@ def get_struct_from_pattern(conf_obj, filepath):
     basename = os.path.basename(filepath)
     conf_structures = conf_obj.file_structures
 
-    structures = [conf_structures[struc_name] for struc_name in conf_structures if re.match(conf_structures[struc_name].file_pattern, basename) is not None]
+    structures = [conf_structures[struct_name] for struct_name in conf_structures
+                  if re.match(conf_structures[struct_name].file_pattern, basename)]
 
     if len(structures) == 0:
         return None
@@ -71,8 +72,7 @@ class CsvFlatFile(object):
                 return test_function(self)
             del module
 
-        for importer, modname, ispkg in pkgutil.iter_modules(['C:\\Users\\menkonda\\AppData\\Local\\Maissa\\ffparser\\plugins']):
-            # module = importlib.import_module("ffparser.testlib." + modname)
+        for importer, modname, ispkg in pkgutil.iter_modules([config.GLOBAL_CONFIG.plugin_dir]):
             module = importer.find_spec(modname).loader.load_module()
             if test_name in dir(module):
                 test_function = getattr(module, test_name)
@@ -97,25 +97,25 @@ class CsvFlatFile(object):
 
 class ImpRecFlatFile(CsvFlatFile):
     def __init__(self, file, config_object):
-        structure = config_object.file_structures[config.IMP_REC_STRUCT_NAME]
+        structure = config_object.file_structures['imp_rec']
         CsvFlatFile.__init__(self, file, structure)
 
-    def get_reception_by_id(self, id):
-        return self.parse_groups()[id]
+    def get_reception_by_id(self, reception_id):
+        return self.parse_groups()[reception_id]
 
 
 def main():
     parser = argparse.ArgumentParser(description='Check a csv file structure')
     parser.add_argument('csv_files', metavar='FILES', nargs='+',
                         help='Files to be checked')
-    parser.add_argument('--config_file', metavar='CONFIG_FILE', help='Configuration file containing the file structures.'
-                                                                     ' By default the file is ' + config.CONFIG_FILE
-                        , default=config.CONFIG_FILE)
+    parser.add_argument('--config_file', metavar='CONFIG_FILE', help='Configuration file with the file structures.'
+                                                                     ' By default the file is ' + config.CONFIG_FILE,
+                        default=config.CONFIG_FILE)
     parser.add_argument('--file_structure', metavar='STRUCT_NAME', help='Name of the file structure to use,'
                                                                         ' by default csvchecker detects the '
                                                                         'file structure from filename pattern')
     parser.add_argument('--output-dir', metavar='OUTPUT_DIR', help='Defines the output directory. By default the '
-                                                                         'directory is current directory')
+                                                                   'directory is current directory')
     parser.add_argument('--no-output', action='store_true', help='If enabled no csv result file')
     parser.add_argument('-v', '--verbose', action='store_true', help='If enabled results will be prompted on screen')
 
@@ -125,7 +125,7 @@ def main():
     config_obj = config.CsvParserConfig(args.config_file)
 
     if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
-        print("Error : Could not load '" + args.file_structure +"' structure from config file ")
+        print("Error : Could not load '" + args.file_structure + " structure from config file ")
         sys.exit(1)
 
     if args.file_structure:
@@ -150,4 +150,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
