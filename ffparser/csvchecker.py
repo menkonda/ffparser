@@ -105,9 +105,7 @@ def main():
                                                                         ' by default csvchecker detects the '
                                                                         'file structure from filename pattern')
     parser.add_argument('--output-dir', metavar='OUTPUT_DIR', help='Defines the output directory. By default the '
-                                                                         'directory is '
-                                                                   + config.GLOBAL_CONFIG.default_output_directory,
-                        default=config.GLOBAL_CONFIG.default_output_directory)
+                                                                         'directory is current directory')
     parser.add_argument('--no-output', action='store_true', help='If enabled no csv result file')
     parser.add_argument('-v', '--verbose', action='store_true', help='If enabled results will be prompted on screen')
 
@@ -123,9 +121,10 @@ def main():
     if args.file_structure:
         file_structure = config_obj.file_structures[args.file_structure]
 
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    if not args.output_dir:
+        args.output_dir = os.getcwd()
 
+    print(args.output_dir)
     for csv_filename in args.csv_files:
         if args.file_structure is None:
             file_structure = get_struct_from_pattern(config_obj, csv_filename)

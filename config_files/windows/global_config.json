@@ -1,4 +1,5 @@
 {
-  "conf_directory" : "\\AppData\\Local\\Maissa\\CsvParser",
-  "default_output_directory" : "C:\\temp\\csvparser_output"
+  "conf_directory" : "\\AppData\\Local\\Maissa\\ffparser",
+  "default_output_directory" : "C:\\temp\\csvparser_output",
+  "plugin_dir" : "\\AppData\\Local\\Maissa\\ffparser"
 }
