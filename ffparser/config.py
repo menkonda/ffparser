@@ -129,9 +129,6 @@ class GlobalConfig:
         self.conf_directory = cfg['conf_directory']
         self.default_output_directory = cfg['default_output_directory']
         self.plugin_dir = cfg['plugin_dir']
-        if not os.path.exists(self.plugin_dir):
-            os.makedirs(self.plugin_dir)
-
 
 
 GLOBAL_CONFIG = GlobalConfig(GLOBAL_CONFIG_FILE)

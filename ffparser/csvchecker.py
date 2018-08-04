@@ -124,7 +124,6 @@ def main():
     if not args.output_dir:
         args.output_dir = os.getcwd()
 
-    print(args.output_dir)
     for csv_filename in args.csv_files:
         if args.file_structure is None:
             file_structure = get_struct_from_pattern(config_obj, csv_filename)

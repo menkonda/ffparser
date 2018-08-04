@@ -6,13 +6,18 @@ import sys
 system = platform.system()
 if system == "Windows":
     conf_directory = os.path.normpath(os.getenv("USERPROFILE")) + "\\AppData\\Local\\Maissa\\ffparser"
+    plugin_dir = os.path.join(conf_directory,"plugins")
 elif system == "Linux":
     conf_directory = "/etc/ffparser"
+    plugin_dir = "/var/lib/ffparser/plugins"
 else:
     raise Exception("Unknown OS. Must be Linux or Windows")
 
-if not os.path.exists(conf_directory):
-    os.makedirs(conf_directory)
+for dir in [conf_directory, plugin_dir]:
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+
 
 here = os.path.abspath(os.path.dirname(__file__))
 
