@@ -4,9 +4,9 @@ import platform
 
 system = platform.system()
 if system == "Windows":
-    conf_directory = os.path.normpath(os.getenv("USERPROFILE")) + "\\AppData\\Local\\Maissa\\CsvParser"
+    conf_directory = os.path.normpath(os.getenv("USERPROFILE")) + "\\AppData\\Local\\Maissa\\ffparser"
 elif system == "Linux":
-    conf_directory = "~/.csvparser"
+    conf_directory = "/etc/ffparser"
 else:
     raise Exception("Unknown OS. Must be Linux or Windows")
 
@@ -128,6 +128,10 @@ class GlobalConfig:
 
         self.conf_directory = cfg['conf_directory']
         self.default_output_directory = cfg['default_output_directory']
+        self.plugin_dir = cfg['plugin_dir']
+        if not os.path.exists(self.plugin_dir):
+            os.makedirs(self.plugin_dir)
+
 
 
 GLOBAL_CONFIG = GlobalConfig(GLOBAL_CONFIG_FILE)
