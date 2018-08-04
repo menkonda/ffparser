@@ -9,6 +9,7 @@ import re
 import argparse
 import sys
 
+GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_FILE)
 
 def get_struct_from_pattern(conf_obj, filepath):
     """
@@ -72,7 +73,7 @@ class CsvFlatFile(object):
                 return test_function(self)
             del module
 
-        for importer, modname, ispkg in pkgutil.iter_modules([config.GLOBAL_CONFIG.plugin_dir]):
+        for importer, modname, ispkg in pkgutil.iter_modules([GLOBAL_CONFIG.plugin_dir]):
             module = importer.find_spec(modname).loader.load_module()
             if test_name in dir(module):
                 test_function = getattr(module, test_name)

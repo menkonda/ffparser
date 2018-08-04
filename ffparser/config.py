@@ -129,4 +129,3 @@ class GlobalConfig:
         self.plugin_dir = cfg['plugin_dir']
 
 
-GLOBAL_CONFIG = GlobalConfig(GLOBAL_CONFIG_FILE)
