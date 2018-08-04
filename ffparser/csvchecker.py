@@ -62,7 +62,7 @@ class CsvFlatFile(object):
         :return: the result of the test inside a TestCaseResult object
         """
         for idx, module_name in enumerate(config.TEST_MODULES):
-            module = importlib.import_module("testlib." + module_name)
+            module = importlib.import_module("ffparser.testlib." + module_name)
             if test_name in dir(module):
                 break
             del module
