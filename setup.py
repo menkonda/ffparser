@@ -1,26 +1,28 @@
 from setuptools import setup, find_packages
 import os
 import platform
-import sys
+import json
+from ffparser.config import get_conf_directory
 
 system = platform.system()
+conf_directory = get_conf_directory()
 if system == "Windows":
-    conf_directory = os.path.normpath(os.getenv("USERPROFILE")) + "\\AppData\\Local\\Maissa\\ffparser"
-    plugin_dir = os.path.join(conf_directory,"plugins")
+    plugin_dir = os.path.join(conf_directory, "plugins")
 elif system == "Linux":
-    conf_directory = "/etc/ffparser"
     plugin_dir = "/var/lib/ffparser/plugins"
 else:
     raise Exception("Unknown OS. Must be Linux or Windows")
 
-for dir in [conf_directory, plugin_dir]:
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+for folder in [conf_directory, plugin_dir]:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
+global_config_dict = {'conf_directory': conf_directory, 'plugin_dir': plugin_dir}
 
+with open(os.path.join(conf_directory, 'global_config.json'), "w") as global_config_file:
+    json.dump(global_config_dict, global_config_file, sort_keys=True, indent=4, separators=(',', ': '))
 
 here = os.path.abspath(os.path.dirname(__file__))
-
 
 setup(
     # This is the name of your project. The first time you publish this
@@ -164,7 +166,7 @@ setup(
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files
     #
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
-    data_files=[(conf_directory, ['config_files/' + system.lower() + '/global_config.json', 'config_files/config.json'])],
+    data_files=[(conf_directory, ['config_files/config.json'])],
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
@@ -192,4 +194,6 @@ setup(
         'Source': 'https://github.com/menkonda/FlatFileAnalyzer',
     },
 )
+
+
 

@@ -1,6 +1,8 @@
 import csv
 from ffparser import config
+import ffparser.testlib
 import ffparser.testlib.common
+import pkgutil
 import importlib
 import os.path
 import re
@@ -61,15 +63,23 @@ class CsvFlatFile(object):
         :param test_name: name of the test. If two test have the same name, the first will be uesed
         :return: the result of the test inside a TestCaseResult object
         """
-        for idx, module_name in enumerate(config.TEST_MODULES):
-            module = importlib.import_module("ffparser.testlib." + module_name)
+        for importer, modname, ispkg in pkgutil.iter_modules(ffparser.testlib.__path__):
+            module = importlib.import_module("ffparser.testlib." + modname)
             if test_name in dir(module):
-                break
+                test_function = getattr(module, test_name)
+                del module
+                return test_function(self)
             del module
-            if idx == (len(config.TEST_MODULES) - 1):
-                 raise Exception("Could not find the test in modules")
-        test_function = getattr(module, test_name)
-        return test_function(self)
+
+        for importer, modname, ispkg in pkgutil.iter_modules(['C:\\Users\\menkonda\\AppData\\Local\\Maissa\\ffparser\\plugins']):
+            # module = importlib.import_module("ffparser.testlib." + modname)
+            module = importer.find_spec(modname).loader.load_module()
+            if test_name in dir(module):
+                test_function = getattr(module, test_name)
+                del module
+                return test_function(self)
+            del module
+        raise Exception("Could not find the test in modules")
 
     def run_test_suite(self, test_list):
         suite_result = ffparser.testlib.common.TestSuiteResult()

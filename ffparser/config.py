@@ -2,20 +2,19 @@ import json
 import os
 import platform
 
-system = platform.system()
-if system == "Windows":
-    conf_directory = os.path.normpath(os.getenv("USERPROFILE")) + "\\AppData\\Local\\Maissa\\ffparser"
-elif system == "Linux":
-    conf_directory = "/etc/ffparser"
-else:
-    raise Exception("Unknown OS. Must be Linux or Windows")
+
+def get_conf_directory():
+    system = platform.system()
+    if system == "Windows":
+        return os.path.normpath(os.getenv("USERPROFILE")) + "\\AppData\\Local\\Maissa\\ffparser"
+    elif system == "Linux":
+        return "/etc/ffparser"
+    else:
+        raise Exception("Unknown OS. Must be Linux or Windows")
 
 
-IMP_REC_STRUCT_NAME = "imp_rec"
-CONFIG_FILE = os.path.join(conf_directory, "config.json")
-GLOBAL_CONFIG_FILE = os.path.join(conf_directory, "global_config.json")
-TEST_MODULES = ["common", "imp_rec"]
-
+CONFIG_FILE = os.path.join(get_conf_directory(), "config.json")
+GLOBAL_CONFIG_FILE = os.path.join(get_conf_directory(), "global_config.json")
 
 class CsvRowStructure(object):
     """
@@ -127,8 +126,4 @@ class GlobalConfig:
         cfg = json.load(conf_file)
 
         self.conf_directory = cfg['conf_directory']
-        self.default_output_directory = cfg['default_output_directory']
         self.plugin_dir = cfg['plugin_dir']
-
-
-GLOBAL_CONFIG = GlobalConfig(GLOBAL_CONFIG_FILE)
