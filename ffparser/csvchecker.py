@@ -8,6 +8,7 @@ import os.path
 import re
 import argparse
 import sys
+import glob
 
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_FILE)
 
@@ -135,7 +136,11 @@ def main():
     if not args.output_dir:
         args.output_dir = os.getcwd()
 
-    for csv_filename in args.csv_files:
+    csv_files = []
+    for csv_file in args.csv_files:
+        csv_files += glob.glob(csv_file)
+
+    for csv_filename in csv_files:
         if args.file_structure is None:
             file_structure = get_struct_from_pattern(config_obj, csv_filename)
         csv_file = open(csv_filename, "r", encoding=file_structure.encoding)
