@@ -119,7 +119,9 @@ def main():
     parser.add_argument('--output-dir', metavar='OUTPUT_DIR', help='Defines the output directory. By default the '
                                                                    'directory is current directory')
     parser.add_argument('--no-output', action='store_true', help='If enabled no csv result file')
-    parser.add_argument('-v', '--verbose', action='store_true', help='If enabled results will be prompted on screen')
+    parser.add_argument('-v', '--verbose', action='store_true', help='If enabled results will be prompted with more '
+                                                                     'verbosity')
+    parser.add_argument('-q', '--quiet', action='store_true', help='If enabled no result will be prompted on screen')
 
     args = parser.parse_args()
     # print(args)
@@ -141,17 +143,23 @@ def main():
         csv_files += glob.glob(csv_file)
 
     for csv_filename in csv_files:
+        if not args.quiet:
+            print("Checking file " + csv_filename)
         if args.file_structure is None:
             file_structure = get_struct_from_pattern(config_obj, csv_filename)
         csv_file = open(csv_filename, "r", encoding=file_structure.encoding)
         flat_file = CsvFlatFile(csv_file, file_structure)
         result = flat_file.run_defined_tests()
-        if args.verbose:
+        if not args.quiet and args.verbose:
             print(result)
+        if not args.quiet:
+            print("Found " + str(result.count_failed()) + " errors in file " + csv_filename)
         output_filename = os.path.join(args.output_dir, "test_" + str(os.path.basename(csv_filename)))
         if not args.no_output:
             with open(output_filename, "w", newline='') as output_file:
                 result.to_csv(output_file)
+            if not args.quiet:
+                print("Results logged in file " + output_filename)
 
 
 if __name__ == "__main__":

@@ -36,6 +36,12 @@ class TestCaseResult(object):
     def __str__(self):
         return "\n".join([step.__str__() for step in self.steps])
 
+    def count_passed(self):
+        return len([step for step in self.steps if step.status])
+
+    def count_failed(self):
+        return len([step for step in self.steps if not step.status])
+
 
 class TestSuiteResult(object):
     def __init__(self):
@@ -50,8 +56,16 @@ class TestSuiteResult(object):
                 return False
         return True
 
+    def count_passed(self):
+        return sum([tc.count_passed() for tc in self.tcs])
+
+    def count_failed(self):
+        return sum([tc.count_failed() for tc in self.tcs])
+
     def __str__(self):
         return "\n".join([tc.__str__() for tc in self.tcs])
+
+
 
     def to_csv(self, file):
         csv_writer = csv.writer(file, delimiter=';', quotechar="\"")
