@@ -9,6 +9,7 @@ import re
 import argparse
 import sys
 import glob
+import time
 
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_FILE)
 
@@ -37,8 +38,35 @@ class CsvFlatFile(object):
     def __init__(self, file, structure):
         self.structure = structure
         self.filename = file.name
-        rows = list(csv.reader(file, delimiter=self.structure.sep, quotechar="\""))
+        if structure.conf_type == 'csv':
+            rows = list(csv.reader(file, delimiter=self.structure.sep, quotechar="\""))
+        else:
+            raw_rows = [line.rstrip() for line in file]
+            rows = []
+            for raw_row in raw_rows:
+                row = []
+                index = 0
+                row_type = raw_row[self.structure.type_pos]
+                row_structure = self.get_row_structure_from_type(row_type)
+                for length in row_structure.lengths:
+                    row.append(raw_row[index:index + length])
+                    index = index + length
+                rows.append(row)
+
         self.rows = rows
+
+    def get_row_structure_from_type(self, row_type):
+        if len(self.structure.row_structures) == 0:
+            raise Exception("No row structures")
+        if len(self.structure.row_structures) == 1:
+            return self.structure.row_structures[0]
+
+        row_struct = [struct for struct in self.structure.row_structures if row_type == struct.type][0]
+
+        if not row_struct:
+            raise Exception("Could not find row structure of type '" + row_type + "'")
+
+        return row_struct
 
     def parse_groups(self):
         """
@@ -126,17 +154,22 @@ def main():
     args = parser.parse_args()
     # print(args)
 
-    config_obj = config.CsvParserConfig(args.config_file)
+    config_obj = config.ParserConfig(args.config_file)
 
     if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
         print("Error : Could not load '" + args.file_structure + " structure from config file ")
         sys.exit(1)
 
     if args.file_structure:
-        file_structure = config_obj.file_structures[args.file_structure]
+        args.file_structure = config_obj.file_structures[args.file_structure]
 
     if not args.output_dir:
         args.output_dir = os.getcwd()
+
+    output_filename = os.path.join(args.output_dir, "test_" + time.strftime("%Y%m%d%H%M%S") + ".csv")
+    with open(output_filename, "w", newline='') as output_file:
+        csv_writer = csv.writer(output_file, delimiter=';', quotechar="\"")
+        csv_writer.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
 
     csv_files = []
     for csv_file in args.csv_files:
@@ -146,17 +179,16 @@ def main():
         if not args.quiet:
             print("Checking file " + csv_filename)
         if args.file_structure is None:
-            file_structure = get_struct_from_pattern(config_obj, csv_filename)
-        csv_file = open(csv_filename, "r", encoding=file_structure.encoding)
-        flat_file = CsvFlatFile(csv_file, file_structure)
+            args.file_structure = get_struct_from_pattern(config_obj, csv_filename)
+        csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
+        flat_file = CsvFlatFile(csv_file, args.file_structure)
         result = flat_file.run_defined_tests()
         if not args.quiet and args.verbose:
             print(result)
         if not args.quiet:
             print("Found " + str(result.count_failed()) + " errors in file " + csv_filename)
-        output_filename = os.path.join(args.output_dir, "test_" + str(os.path.basename(csv_filename)))
         if not args.no_output:
-            with open(output_filename, "w", newline='') as output_file:
+            with open(output_filename, "a", newline='') as output_file:
                 result.to_csv(output_file)
             if not args.quiet:
                 print("Results logged in file " + output_filename)

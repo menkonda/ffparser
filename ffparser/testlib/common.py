@@ -69,12 +69,24 @@ class TestSuiteResult(object):
 
     def to_csv(self, file):
         csv_writer = csv.writer(file, delimiter=';', quotechar="\"")
-        csv_writer.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
         for tc in self.tcs:
             for step in tc.steps:
                 csv_writer.writerow([step.filename, str(step.line_number),  str(step.status),
                                      step.error_type, step.message])
 
+
+def get_row_structure_from_type(row_structures, row_type):
+    if len(row_structures) == 0:
+        raise Exception("No row structures")
+    if len(row_structures) == 1:
+        return row_structures[0]
+
+    row_struct = [struct for struct in row_structures if row_type == struct.type][0]
+
+    if not row_struct:
+        raise Exception("Could not find row structure of type '" + row_type + "'")
+
+    return row_struct
 
 def check_dates(flat_file_object):
     """
@@ -85,7 +97,7 @@ def check_dates(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-        row_struct = [struct for struct in flat_file_object.structure.row_structures if row_type == struct.type][0]
+        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
         for pos in row_struct.date_fields:
             date_string = row[pos - 1]
             try:
@@ -107,25 +119,43 @@ def check_required(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-        row_struct = [struct for struct in flat_file_object.structure.row_structures if row_type == struct.type][0]
+        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
         for pos in range(0, row_struct.length):
-            if (pos + 1) in row_struct.optional_fields:
-                continue
-            if row[pos] == '':
-                step_result = TestCaseStepResult(idx + 1, False, 'REQUIRED_FIELD', "Missing required field at position "
-                                             + str(pos + 1), os.path.basename(flat_file_object.filename))
-                result.steps.append(step_result)
+                if (pos + 1) in row_struct.optional_fields:
+                    continue
+                if row[pos] == '':
+                    step_result = TestCaseStepResult(idx + 1, False, 'REQUIRED_FIELD', "Missing required field at position "
+                                                 + str(pos + 1), os.path.basename(flat_file_object.filename))
+                    result.steps.append(step_result)
     return result
 
 
 def check_field_lengths(flat_file_object):
+    """
+    Check the lengths of mandatory fields is csv files
+    :param flat_file_object:
+    :return:
+    """
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-        row_struct = [struct for struct in flat_file_object.structure.row_structures if row_type == struct.type][0]
+        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
         for fixed_length in row_struct.fixed_lengths:
-            if len(row[fixed_length[0] - 1]) != fixed_length[1]:
-                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_LENGTH_ERROR', "Wrong field length at position "
-                                                 + str(fixed_length[0]), os.path.basename(flat_file_object.filename))
-                result.steps.append(step_result)
+                if len(row[fixed_length[0] - 1]) != fixed_length[1]:
+                    step_result = TestCaseStepResult(idx + 1, False, 'FIELD_LENGTH_ERROR', "Wrong field length at position "
+                                                     + str(fixed_length[0]), os.path.basename(flat_file_object.filename))
+                    result.steps.append(step_result)
+    return result
+
+
+def check_digit_fields(flat_file_object):
+    result = TestCaseResult()
+    for idx, row in enumerate(flat_file_object.rows):
+        row_type = row[flat_file_object.structure.type_pos - 1]
+        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
+        for digit_field in row_struct.digit_fields:
+                if not row[digit_field - 1].isdigit():
+                    step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field should be numeric." + row[digit_field - 1]
+                                                     , os.path.basename(flat_file_object.filename))
+                    result.steps.append(step_result)
     return result
