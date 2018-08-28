@@ -13,6 +13,7 @@ import time
 
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_FILE)
 
+
 def get_struct_from_pattern(conf_obj, filepath):
     """
     Search in the configuration object for a file structure matching the pattern of the file
@@ -34,8 +35,15 @@ def get_struct_from_pattern(conf_obj, filepath):
     return structures[0]
 
 
-class CsvFlatFile(object):
+class FlatFile(object):
     def __init__(self, file, structure):
+        """
+        Object holding the data and the file structure of a flat file. According to the file type "csv" or "pos"
+        the lines are parsed with different methods
+        :param file: file object of the file to be treated
+        :param structure: file structure used to parse the file
+        ..todo::create a mother class and use inheritance to manage different file type
+        """
         self.structure = structure
         self.filename = file.name
         if structure.conf_type == 'csv':
@@ -61,12 +69,12 @@ class CsvFlatFile(object):
         if len(self.structure.row_structures) == 1:
             return self.structure.row_structures[0]
 
-        row_struct = [struct for struct in self.structure.row_structures if row_type == struct.type][0]
+        row_structure = [struct for struct in self.structure.row_structures if row_type == struct.type][0]
 
-        if not row_struct:
+        if not row_structure:
             raise Exception("Could not find row structure of type '" + row_type + "'")
 
-        return row_struct
+        return row_structure
 
     def parse_groups(self):
         """
@@ -112,6 +120,11 @@ class CsvFlatFile(object):
         raise Exception("Could not find the test in modules")
 
     def run_test_suite(self, test_list):
+        """
+        Run a set of tests with given names
+        :param test_list: list of tests
+        :return:
+        """
         suite_result = ffparser.testlib.common.TestSuiteResult()
         for test in test_list:
             tc_result = self.run_test_case(test)
@@ -123,15 +136,6 @@ class CsvFlatFile(object):
 
     def list_keys(self):
         return self.parse_groups().keys()
-
-
-class ImpRecFlatFile(CsvFlatFile):
-    def __init__(self, file, config_object):
-        structure = config_object.file_structures['imp_rec']
-        CsvFlatFile.__init__(self, file, structure)
-
-    def get_reception_by_id(self, reception_id):
-        return self.parse_groups()[reception_id]
 
 
 def main():
@@ -181,7 +185,7 @@ def main():
         if args.file_structure is None:
             args.file_structure = get_struct_from_pattern(config_obj, csv_filename)
         csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
-        flat_file = CsvFlatFile(csv_file, args.file_structure)
+        flat_file = FlatFile(csv_file, args.file_structure)
         result = flat_file.run_defined_tests()
         if not args.quiet and args.verbose:
             print(result)

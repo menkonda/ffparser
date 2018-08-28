@@ -17,6 +17,60 @@ def get_conf_directory():
         raise Exception("Unknown OS. Must be Linux or Windows")
 
 
+def get_csv_file_struct_from_dict(fs_name, fs_dict):
+    """
+    Returns a csv file structure object given a dictionary with correct information. Usually loaded from a JSON.
+    :param fs_name: name of the file structure.
+    :param fs_dict: dictionary loaded from a json holding the file structure
+    :return: a CsvFlatFileStructure object
+    """
+    conf_type = fs_dict['conf_type']
+    type_pos = fs_dict['type_pos']
+    date_fmt = fs_dict['date_fmt']
+    decimal_sep = fs_dict['decimal_sep']
+    file_pattern = fs_dict['file_pattern']
+    tests = fs_dict['tests']
+    sep = fs_dict['sep']
+    quotechar = fs_dict['quotechar']
+    encoding = fs_dict['encoding']
+    row_structures = []
+    for row_structure in fs_dict['row_structures']:
+        structure = CsvRowStructure(row_structure['type'], row_structure['length'],
+                                    row_structure['date_fields'], row_structure['key_pos'],
+                                    row_structure['optional_fields'], row_structure['decimal_fields'],
+                                    row_structure['digit_fields'], row_structure["fixed_lengths"])
+        row_structures.append(structure)
+
+    return CsvFlatFileStructure(fs_name, conf_type, type_pos, date_fmt,  row_structures, decimal_sep, file_pattern,
+                                tests, sep, encoding, quotechar)
+
+
+def get_pos_file_struct_from_dict(fs_name, fs_dict):
+    """
+    Returns a pos file structure object given a dictionary with correct information. Usually loaded from a JSON.
+    :param fs_name: name of the file structure.
+    :param fs_dict: dictionary loaded from a json holding the file structure
+    :return: a PosFlatFileStructure object
+    """
+    conf_type = fs_dict['conf_type']
+    type_pos = fs_dict['type_pos']
+    date_fmt = fs_dict['date_fmt']
+    decimal_sep = fs_dict['decimal_sep']
+    file_pattern = fs_dict['file_pattern']
+    tests = fs_dict['tests']
+    quotechar = fs_dict['quotechar']
+    encoding = fs_dict['encoding']
+    row_structures = []
+    for row_structure in fs_dict['row_structures']:
+        structure = PosRowStructure(row_structure['type'], row_structure['lengths'],
+                                    row_structure['date_fields'], row_structure['key_pos'],
+                                    row_structure['optional_fields'], row_structure['decimal_fields'],
+                                    row_structure['digit_fields'])
+        row_structures.append(structure)
+    return PosFlatFileStructure(fs_name, conf_type, type_pos, date_fmt,
+                                row_structures, decimal_sep, file_pattern, tests, encoding, quotechar)
+
+
 CONFIG_FILE = os.path.join(get_conf_directory(), "config.json")
 GLOBAL_CONFIG_FILE = os.path.join(get_conf_directory(), "global_config.json")
 
@@ -25,12 +79,12 @@ class CsvRowStructure(object):
     """
     Structure of a row in a csv flat file
     """
-    def __init__(self, type, length, date_fields, key_pos, optional_fields, decimal_fields, digit_fields,
+    def __init__(self, row_type, length, date_fields, key_pos, optional_fields, decimal_fields, digit_fields,
                  fixed_lengths):
         """
         Instantiate a new row structure.
-        :param type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for Line
-        rows. (string)
+        :param row_type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for
+        Line rows. (string)
         :param length: number of fields in the row. (integer)
         :param date_fields: fields containing dates. Used to check date formats. array(integer)
         :param key_pos: Several line types can be related. For example, for an invoice, you may have a header line,
@@ -43,7 +97,7 @@ class CsvRowStructure(object):
         :param digit_fields: the fields containing digits. array(integer)
         :param fixed_lengths: A list of pairs. [(5,8),(2,4)] meaning that filed 5 must be 8 chars and 2 must be 4 chars
         """
-        self.type = type
+        self.type = row_type
         self.length = length
         self.key_pos = key_pos
         self.optional_fields = optional_fields
@@ -57,11 +111,11 @@ class PosRowStructure(object):
     """
     Structure of a row in a positional flat file
     """
-    def __init__(self, type, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields):
+    def __init__(self, row_type, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields):
         """
         Instantiate a new row structure.
-        :param type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for Line
-        rows. (string)
+        :param row_type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for
+        Line rows. (string)
         :param lengths: lengths of the fields
         :param date_fields: fields containing dates. Used to check date formats. array(integer)
         :param key_pos: Several line types can be related. For example, for an invoice, you may have a header line,
@@ -73,7 +127,7 @@ class PosRowStructure(object):
         array(integer)
         :param digit_fields: the fields containing digits. array(integer)
         """
-        self.type = type
+        self.type = row_type
         self.lengths = lengths
         self.key_pos = key_pos
         self.optional_fields = optional_fields
@@ -89,7 +143,7 @@ class CsvFlatFileStructure(object):
     def __init__(self, name, conf_type, type_pos, date_fmt, row_structures,decimal_sep, file_pattern, tests, sep,
                  encoding, quotechar):
         """
-        Constructor of a flat file structure
+        Constructor of a csv flat file structure
         :param name: name of thh structure. It should be defined in the configuration file
         :param conf_type: type of configuration. Can be 'csv' or 'pos'
         :param type_pos: position of the field in which the line type can be found. Start at 1
@@ -122,7 +176,7 @@ class PosFlatFileStructure(object):
     def __init__(self, name, conf_type, type_pos, date_fmt, row_structures,decimal_sep, file_pattern, tests,
                  encoding, quotechar):
         """
-        Constructor of a flat file structure
+        Constructor of a positional flat file structure
         :param name: name of thh structure. It should be defined in the configuration file
         :param conf_type: type of configuration. Can be 'csv' or 'pos'
         :param type_pos: position of the field in which the line type can be found. Start at 1
@@ -131,7 +185,6 @@ class PosFlatFileStructure(object):
         :param decimal_sep: default decimal separator
         :param tests: tests associated with the file structure. The name of the tests are the name of the functions in
         the test_lib module
-        :param sep: CSV separator
         :param encoding: encoding used for decryption
         :param quotechar: quotechar
         """
@@ -161,47 +214,14 @@ class ParserConfig(object):
         conf_file = open(file_path, "r")
         cfg = json.load(conf_file)
 
-        for file_struct_name in cfg['file_structures']:
-            file_structure = cfg['file_structures'][file_struct_name]
-            if file_structure['conf_type'] == "csv":
-                conf_type = file_structure['conf_type']
-                type_pos = file_structure['type_pos']
-                date_fmt = file_structure['date_fmt']
-                decimal_sep = file_structure['decimal_sep']
-                file_pattern = file_structure['file_pattern']
-                tests = file_structure['tests']
-                sep = file_structure['sep']
-                quotechar = file_structure['quotechar']
-                encoding = file_structure['encoding']
-                row_structures = []
-                for row_structure in file_structure['row_structures']:
-                    structure = CsvRowStructure(row_structure['type'], row_structure['length'],
-                                                row_structure['date_fields'], row_structure['key_pos'],
-                                                row_structure['optional_fields'], row_structure['decimal_fields'],
-                                                row_structure['digit_fields'],row_structure["fixed_lengths"])
-                    row_structures.append(structure)
-                self.file_structures[file_struct_name]=CsvFlatFileStructure(file_struct_name, conf_type, type_pos, date_fmt,
-                                                                            row_structures, decimal_sep, file_pattern,
-                                                                            tests, sep, encoding, quotechar)
-            if file_structure['conf_type'] == "pos":
-                conf_type = file_structure['conf_type']
-                type_pos = file_structure['type_pos']
-                date_fmt = file_structure['date_fmt']
-                decimal_sep = file_structure['decimal_sep']
-                file_pattern = file_structure['file_pattern']
-                tests = file_structure['tests']
-                quotechar = file_structure['quotechar']
-                encoding = file_structure['encoding']
-                row_structures = []
-                for row_structure in file_structure['row_structures']:
-                    structure = PosRowStructure(row_structure['type'], row_structure['lengths'],
-                                                row_structure['date_fields'], row_structure['key_pos'],
-                                                row_structure['optional_fields'], row_structure['decimal_fields'],
-                                                row_structure['digit_fields'])
-                    row_structures.append(structure)
-                self.file_structures[file_struct_name]=PosFlatFileStructure(file_struct_name, conf_type, type_pos, date_fmt,
-                                                                            row_structures, decimal_sep, file_pattern,
-                                                                            tests, encoding, quotechar)
+        for file_structure_name in cfg['file_structures']:
+            file_structure_dict = cfg['file_structures'][file_structure_name]
+            if file_structure_dict['conf_type'] == "csv":
+                self.file_structures[file_structure_name] = get_csv_file_struct_from_dict(file_structure_name,
+                                                                                          file_structure_dict)
+            if file_structure_dict['conf_type'] == "pos":
+                self.file_structures[file_structure_name] = get_pos_file_struct_from_dict(file_structure_name,
+                                                                                          file_structure_dict)
 
 
 class GlobalConfig:
