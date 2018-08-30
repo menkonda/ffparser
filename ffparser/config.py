@@ -233,4 +233,3 @@ class GlobalConfig:
         self.conf_directory = cfg['conf_directory']
         self.plugin_dir = cfg['plugin_dir']
 
-

@@ -88,6 +88,7 @@ def get_row_structure_from_type(row_structures, row_type):
 
     return row_struct
 
+
 def check_dates(flat_file_object):
     """
     Check the date format of a given csv according to its structure
@@ -97,9 +98,12 @@ def check_dates(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
+        #print("DEBUG check_dates :" + str(idx) + " " + str(row_type))
         row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
         for pos in row_struct.date_fields:
             date_string = row[pos - 1]
+            if date_string == '':
+                continue
             try:
                 date = time.strptime(date_string, flat_file_object.structure.date_fmt)
             except ValueError:
@@ -121,12 +125,12 @@ def check_required(flat_file_object):
         row_type = row[flat_file_object.structure.type_pos - 1]
         row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
         for pos in range(0, row_struct.length):
-                if (pos + 1) in row_struct.optional_fields:
-                    continue
-                if row[pos] == '':
-                    step_result = TestCaseStepResult(idx + 1, False, 'REQUIRED_FIELD', "Missing required field at position "
-                                                 + str(pos + 1), os.path.basename(flat_file_object.filename))
-                    result.steps.append(step_result)
+            if (pos + 1) in row_struct.optional_fields:
+                continue
+            if row[pos] == '':
+                step_result = TestCaseStepResult(idx + 1, False, 'REQUIRED_FIELD', "Missing required field at position "
+                                             + str(pos + 1), os.path.basename(flat_file_object.filename))
+                result.steps.append(step_result)
     return result
 
 
@@ -141,10 +145,13 @@ def check_field_lengths(flat_file_object):
         row_type = row[flat_file_object.structure.type_pos - 1]
         row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
         for fixed_length in row_struct.fixed_lengths:
-                if len(row[fixed_length[0] - 1]) != fixed_length[1]:
-                    step_result = TestCaseStepResult(idx + 1, False, 'FIELD_LENGTH_ERROR', "Wrong field length at position "
-                                                     + str(fixed_length[0]), os.path.basename(flat_file_object.filename))
-                    result.steps.append(step_result)
+            field_content = row[fixed_length[0] - 1]
+            if field_content == '':
+                continue
+            if len(field_content) != fixed_length[1]:
+                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_LENGTH_ERROR', "Wrong field length at position "
+                                                 + str(field_content), os.path.basename(flat_file_object.filename))
+                result.steps.append(step_result)
     return result
 
 
@@ -154,8 +161,12 @@ def check_digit_fields(flat_file_object):
         row_type = row[flat_file_object.structure.type_pos - 1]
         row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
         for digit_field in row_struct.digit_fields:
-                if not row[digit_field - 1].isdigit():
-                    step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field should be numeric." + row[digit_field - 1]
-                                                     , os.path.basename(flat_file_object.filename))
-                    result.steps.append(step_result)
+            field_content = row[digit_field - 1]
+            if field_content == '':
+                continue
+            if not field_content.isdigit():
+                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
+                                                 "Field should be numeric at field " + str(digit_field) + " : "
+                                                 + field_content, os.path.basename(flat_file_object.filename))
+                result.steps.append(step_result)
     return result
