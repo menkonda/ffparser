@@ -2,6 +2,7 @@ import time
 import os.path
 import csv
 
+
 class TestCaseStepResult(object):
     def __init__(self, line_number, status, error_type, message, filename=""):
         self.status = status

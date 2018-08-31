@@ -10,6 +10,7 @@ import argparse
 import sys
 import glob
 import time
+import json
 
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_FILE)
 
@@ -158,7 +159,11 @@ def main():
     args = parser.parse_args()
     # print(args)
 
-    config_obj = config.ParserConfig(args.config_file)
+    try:
+        config_obj = config.ParserConfig(args.config_file)
+    except json.JSONDecodeError as err:
+        print("ERROR: Could not decode", args.config_file, "configuration file due to following error :", err.msg, "line", err.lineno, "column", err.colno)
+        sys.exit(-1)
 
     if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
         print("Error : Could not load '" + args.file_structure + " structure from config file ")
