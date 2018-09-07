@@ -49,13 +49,18 @@ class TestSuiteResult(object):
         self.status = None
         self.tcs = []
 
-    def get_test_status (self):
+    def set_test_status (self):
+        """
+        Set the status of the test suite according to the test cases result
+        :return: The status of the test suite
+        """
         if len(self.tcs) == 0:
-            return None
+            self.status = None
         for line in self.tcs :
             if not line.status :
-                return False
-        return True
+                self.status = False
+        self.status = True
+        return self.status
 
     def count_passed(self):
         return sum([tc.count_passed() for tc in self.tcs])
@@ -65,8 +70,6 @@ class TestSuiteResult(object):
 
     def __str__(self):
         return "\n".join([tc.__str__() for tc in self.tcs])
-
-
 
     def to_csv(self, file):
         csv_writer = csv.writer(file, delimiter=';', quotechar="\"")
@@ -82,18 +85,20 @@ def get_row_structure_from_type(row_structures, row_type):
     if len(row_structures) == 1:
         return row_structures[0]
 
-    row_struct = [struct for struct in row_structures if row_type == struct.type][0]
+    row_structs = [struct for struct in row_structures if row_type == struct.type]
 
-    if not row_struct:
+    if len(row_structs) == 0:
         raise Exception("Could not find row structure of type '" + row_type + "'")
+    if len(row_structs) > 1:
+        raise Exception("More than one row structure corresponding to '" + row_type + "'")
 
-    return row_struct
+    return row_structs[0]
 
 
 def check_dates(flat_file_object):
     """
     Check the date format of a given csv according to its structure
-    :param flat_file_object: the oCsvFlatFile object containing the content of the flat file and file structure
+    :param flat_file_object: the FlatFile object containing the content of the flat file and file structure
     :return: a TesCaseResult object with all the lines and position containing date format error
     """
     result = TestCaseResult()
@@ -118,7 +123,7 @@ def check_dates(flat_file_object):
 def check_required(flat_file_object):
     """
     Check the required fields according to file
-    :param flat_file_object: the CsvFlatFile object containing the content of the flat file and file structure
+    :param flat_file_object: the FlatFile object containing the content of the flat file and file structure
     :return: a TesCaseResult object with all the lines and position containing missing fields
     """
     result = TestCaseResult()
@@ -138,8 +143,8 @@ def check_required(flat_file_object):
 def check_field_lengths(flat_file_object):
     """
     Check the lengths of mandatory fields is csv files
-    :param flat_file_object:
-    :return:
+    :param flat_file_object: the FlatFile object containing the content of the flat file and file structure
+    :return:a TesCaseResult object with all the lines and position with wrong field length
     """
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
@@ -151,12 +156,17 @@ def check_field_lengths(flat_file_object):
                 continue
             if len(field_content) != fixed_length[1]:
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_LENGTH_ERROR', "Wrong field length at position "
-                                                 + str(field_content), os.path.basename(flat_file_object.filename))
+                                                 + str(fixed_length[0]) + ". Should be " + str(fixed_length[1]), os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
 
 
 def check_digit_fields(flat_file_object):
+    """
+    Check if fields defined as numeric are only made of digits
+    :param flat_file_object: he FlatFile object containing the content of the flat file and file structure
+    :return: a TesCaseResult object with all the lines and position containing alpha instead of digit fields
+    """
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
@@ -171,3 +181,51 @@ def check_digit_fields(flat_file_object):
                                                  + field_content, os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
+
+def check_digit_fields(flat_file_object):
+    """
+    Check if field defined as
+    :param flat_file_object:
+    :return:
+    """
+    result = TestCaseResult()
+    for idx, row in enumerate(flat_file_object.rows):
+        row_type = row[flat_file_object.structure.type_pos - 1]
+        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
+        for digit_field in row_struct.digit_fields:
+            field_content = row[digit_field - 1]
+            if field_content == '':
+                continue
+            if not field_content.isdigit():
+                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
+                                                 "Field should be numeric at field " + str(digit_field) + " : "
+                                                 + field_content, os.path.basename(flat_file_object.filename))
+                result.steps.append(step_result)
+    return result
+
+
+def check_carriage_return(flat_file_object):
+    """
+    Check if field defined as
+    :param flat_file_object:
+    :return:
+    """
+    result = TestCaseResult()
+    carriage_return = flat_file_object.structure.carriage_return
+    file = open(flat_file_object.filename, "r", newline='', encoding='utf8')
+    # print(carriage_return)
+    for idx, line in enumerate(file.readlines()):
+        if line.endswith("\r\n"):
+            if line[-2:] != carriage_return:
+                step_result = TestCaseStepResult(idx + 1, False, 'CARRIAGE_RETURN_ERROR', "Wrong carriage return." +
+                                                 " Should be " + repr(carriage_return),
+                                                 os.path.basename(flat_file_object.filename))
+                result.steps.append(step_result)
+        else:
+            if line[-1:] != carriage_return:
+                step_result = TestCaseStepResult(idx + 1, False, 'CARRIAGE_RETURN_ERROR', "Wrong carriage return." +
+                                                 " Should be " + repr(carriage_return),
+                                                 os.path.basename(flat_file_object.filename))
+                result.steps.append(step_result)
+    return result
+

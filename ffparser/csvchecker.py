@@ -99,7 +99,8 @@ class FlatFile(object):
 
     def run_test_case(self, test_name):
         """
-        Run the test test_name. It must be implemented in a submodule within the testlib module
+        Run the test test_name. It must be implemented in a submodule within the testlib module or in a module within
+        the plugin directory defined in the global config file
         :param test_name: name of the test. If two test have the same name, the first will be uesed
         :return: the result of the test inside a TestCaseResult object
         """
@@ -162,7 +163,8 @@ def main():
     try:
         config_obj = config.ParserConfig(args.config_file)
     except json.JSONDecodeError as err:
-        print("ERROR: Could not decode", args.config_file, "configuration file due to following error :", err.msg, "line", err.lineno, "column", err.colno)
+        print("ERROR: Could not decode", args.config_file, "configuration file due to following error :", err.msg,
+              "line", err.lineno, "column", err.colno)
         sys.exit(-1)
 
     if args.file_structure is not None and args.file_structure not in config_obj.file_structures:

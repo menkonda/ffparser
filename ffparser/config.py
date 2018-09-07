@@ -33,6 +33,7 @@ def get_csv_file_struct_from_dict(fs_name, fs_dict):
     sep = fs_dict['sep']
     quotechar = fs_dict['quotechar']
     encoding = fs_dict['encoding']
+    carriage_return = fs_dict['carriage_return']
     row_structures = []
     for row_structure in fs_dict['row_structures']:
         structure = CsvRowStructure(row_structure['type'], row_structure['length'],
@@ -42,7 +43,7 @@ def get_csv_file_struct_from_dict(fs_name, fs_dict):
         row_structures.append(structure)
 
     return CsvFlatFileStructure(fs_name, conf_type, type_pos, date_fmt,  row_structures, decimal_sep, file_pattern,
-                                tests, sep, encoding, quotechar)
+                                tests, sep, encoding, quotechar,carriage_return)
 
 
 def get_pos_file_struct_from_dict(fs_name, fs_dict):
@@ -60,6 +61,7 @@ def get_pos_file_struct_from_dict(fs_name, fs_dict):
     tests = fs_dict['tests']
     quotechar = fs_dict['quotechar']
     encoding = fs_dict['encoding']
+    carriage_return = fs_dict['carriage_return']
     row_structures = []
     for row_structure in fs_dict['row_structures']:
         structure = PosRowStructure(row_structure['type'], row_structure['lengths'],
@@ -68,7 +70,7 @@ def get_pos_file_struct_from_dict(fs_name, fs_dict):
                                     row_structure['digit_fields'])
         row_structures.append(structure)
     return PosFlatFileStructure(fs_name, conf_type, type_pos, date_fmt,
-                                row_structures, decimal_sep, file_pattern, tests, encoding, quotechar)
+                                row_structures, decimal_sep, file_pattern, tests, encoding, quotechar, carriage_return)
 
 
 CONFIG_FILE = os.path.join(get_conf_directory(), "config.json")
@@ -141,7 +143,7 @@ class CsvFlatFileStructure(object):
     Describes the structure of csv flat file
     """
     def __init__(self, name, conf_type, type_pos, date_fmt, row_structures,decimal_sep, file_pattern, tests, sep,
-                 encoding, quotechar):
+                 encoding, quotechar, carriage_return):
         """
         Constructor of a csv flat file structure
         :param name: name of thh structure. It should be defined in the configuration file
@@ -167,6 +169,7 @@ class CsvFlatFileStructure(object):
         self.sep = sep
         self.encoding = encoding
         self.quotechar = quotechar
+        self.carriage_return = carriage_return
 
 
 class PosFlatFileStructure(object):
@@ -174,7 +177,7 @@ class PosFlatFileStructure(object):
     Describes the structure of positional flat file
     """
     def __init__(self, name, conf_type, type_pos, date_fmt, row_structures,decimal_sep, file_pattern, tests,
-                 encoding, quotechar):
+                 encoding, quotechar, carriage_return):
         """
         Constructor of a positional flat file structure
         :param name: name of thh structure. It should be defined in the configuration file
@@ -198,6 +201,7 @@ class PosFlatFileStructure(object):
         self.tests = tests
         self.encoding = encoding
         self.quotechar = quotechar
+        self.carriage_return = carriage_return
 
 
 class ParserConfig(object):
