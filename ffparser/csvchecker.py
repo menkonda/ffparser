@@ -119,7 +119,7 @@ class FlatFile(object):
                 del module
                 return test_function(self)
             del module
-        raise Exception("Could not find the test in modules")
+        raise Exception("Could not find the test " + test_name + " in modules")
 
     def run_test_suite(self, test_list):
         """
