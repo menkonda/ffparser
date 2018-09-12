@@ -62,15 +62,17 @@ def get_pos_file_struct_from_dict(fs_name, fs_dict):
     quotechar = fs_dict['quotechar']
     encoding = fs_dict['encoding']
     carriage_return = fs_dict['carriage_return']
+    type_limits = fs_dict['type_limits']
     row_structures = []
     for row_structure in fs_dict['row_structures']:
-        structure = PosRowStructure(row_structure['type'], row_structure['lengths'],
+        structure = PosRowStructure(row_structure['type'], row_structure['length'], row_structure['lengths'],
                                     row_structure['date_fields'], row_structure['key_pos'],
                                     row_structure['optional_fields'], row_structure['decimal_fields'],
                                     row_structure['digit_fields'])
         row_structures.append(structure)
     return PosFlatFileStructure(fs_name, conf_type, type_pos, date_fmt,
-                                row_structures, decimal_sep, file_pattern, tests, encoding, quotechar, carriage_return)
+                                row_structures, decimal_sep, file_pattern, tests, encoding, quotechar, carriage_return,
+                                type_limits)
 
 
 CONFIG_FILE = os.path.join(get_conf_directory(), "config.json")
@@ -113,7 +115,7 @@ class PosRowStructure(object):
     """
     Structure of a row in a positional flat file
     """
-    def __init__(self, row_type, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields):
+    def __init__(self, row_type, length, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields):
         """
         Instantiate a new row structure.
         :param row_type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for
@@ -130,12 +132,14 @@ class PosRowStructure(object):
         :param digit_fields: the fields containing digits. array(integer)
         """
         self.type = row_type
+        self.length = length
         self.lengths = lengths
         self.key_pos = key_pos
         self.optional_fields = optional_fields
         self.decimal_fields = decimal_fields
         self.digit_fields = digit_fields
         self.date_fields = date_fields
+
 
 
 class CsvFlatFileStructure(object):
@@ -177,7 +181,7 @@ class PosFlatFileStructure(object):
     Describes the structure of positional flat file
     """
     def __init__(self, name, conf_type, type_pos, date_fmt, row_structures,decimal_sep, file_pattern, tests,
-                 encoding, quotechar, carriage_return):
+                 encoding, quotechar, carriage_return, type_limits):
         """
         Constructor of a positional flat file structure
         :param name: name of thh structure. It should be defined in the configuration file
@@ -202,6 +206,9 @@ class PosFlatFileStructure(object):
         self.encoding = encoding
         self.quotechar = quotechar
         self.carriage_return = carriage_return
+        self.type_limits = type_limits
+
+
 
 
 class ParserConfig(object):

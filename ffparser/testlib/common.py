@@ -1,6 +1,7 @@
 import time
 import os.path
 import csv
+import re
 
 
 class TestCaseStepResult(object):
@@ -85,7 +86,7 @@ def get_row_structure_from_type(row_structures, row_type):
     if len(row_structures) == 1:
         return row_structures[0]
 
-    row_structs = [struct for struct in row_structures if row_type == struct.type]
+    row_structs = [struct for struct in row_structures if re.match(struct.type,row_type)]
 
     if len(row_structs) == 0:
         raise Exception("Could not find row structure of type '" + row_type + "'")
@@ -182,27 +183,6 @@ def check_digit_fields(flat_file_object):
                 result.steps.append(step_result)
     return result
 
-def check_digit_fields(flat_file_object):
-    """
-    Check if field defined as
-    :param flat_file_object:
-    :return:
-    """
-    result = TestCaseResult()
-    for idx, row in enumerate(flat_file_object.rows):
-        row_type = row[flat_file_object.structure.type_pos - 1]
-        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
-        for digit_field in row_struct.digit_fields:
-            field_content = row[digit_field - 1]
-            if field_content == '':
-                continue
-            if not field_content.isdigit():
-                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
-                                                 "Field should be numeric at field " + str(digit_field) + " : "
-                                                 + field_content, os.path.basename(flat_file_object.filename))
-                result.steps.append(step_result)
-    return result
-
 
 def check_carriage_return(flat_file_object):
     """
@@ -213,7 +193,6 @@ def check_carriage_return(flat_file_object):
     result = TestCaseResult()
     carriage_return = flat_file_object.structure.carriage_return
     file = open(flat_file_object.filename, "r", newline='', encoding='utf8')
-    # print(carriage_return)
     for idx, line in enumerate(file.readlines()):
         if line.endswith("\r\n"):
             if line[-2:] != carriage_return:

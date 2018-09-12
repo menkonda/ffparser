@@ -52,10 +52,13 @@ class FlatFile(object):
         else:
             raw_rows = [line.rstrip() for line in file]
             rows = []
-            for raw_row in raw_rows:
+            for idx, raw_row in enumerate(raw_rows):
                 row = []
                 index = 0
-                row_type = raw_row[self.structure.type_pos]
+                row_type = raw_row[self.structure.type_limits[0] - 1:self.structure.type_limits[1]]
+                # print(idx, row_type)
+                if idx == 809:
+                    pass
                 row_structure = self.get_row_structure_from_type(row_type)
                 for length in row_structure.lengths:
                     row.append(raw_row[index:index + length])
@@ -69,8 +72,7 @@ class FlatFile(object):
             raise Exception("No row structures")
         if len(self.structure.row_structures) == 1:
             return self.structure.row_structures[0]
-
-        row_structure = [struct for struct in self.structure.row_structures if row_type == struct.type][0]
+        row_structure = [row_struct for row_struct in self.structure.row_structures if re.match(row_struct.type, row_type)][0]
 
         if not row_structure:
             raise Exception("Could not find row structure of type '" + row_type + "'")
