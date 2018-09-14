@@ -222,6 +222,7 @@ class ParserConfig(object):
         struct_filenames = glob.glob(os.path.join(self.struct_dir_path,"struct_*.json"))
 
         for struct_filename in struct_filenames:
+            print(struct_filename)
             with open(struct_filename, 'r') as struct_file:
                 struct_dict = json.load(struct_file)
             struct_name = re.search("struct_(.*).json", struct_filename).group(1)

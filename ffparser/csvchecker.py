@@ -15,6 +15,7 @@ import json
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_FILE)
 
 
+
 def get_struct_from_pattern(conf_obj, filepath):
     """
     Search in the configuration object for a file structure matching the pattern of the file
@@ -35,6 +36,9 @@ def get_struct_from_pattern(conf_obj, filepath):
 
     return structures[0]
 
+class RowStructException(Exception):
+    def __init__(self,  message):
+        self.message = message
 
 class FlatFile(object):
     def __init__(self, file, structure):
@@ -49,41 +53,42 @@ class FlatFile(object):
         self.filename = file.name
         if structure.conf_type == 'csv':
             rows = list(csv.reader(file, delimiter=self.structure.sep, quotechar="\""))
-        else:
+        elif structure.conf_type == 'pos':
             raw_rows = [line.rstrip() for line in file]
             rows = []
             for idx, raw_row in enumerate(raw_rows):
                 row = []
                 index = 0
                 row_type = raw_row[self.structure.type_limits[0] - 1:self.structure.type_limits[1]]
-                # print(idx, row_type)
-                if idx == 809:
-                    pass
                 row_structure = self.get_row_structure_from_type(row_type)
                 for length in row_structure.lengths:
                     row.append(raw_row[index:index + length])
                     index = index + length
                 rows.append(row)
+        else:
+            raise Exception("Structure conf_type must be 'pos' or 'csv'. Not " + structure.conf_type)
 
         self.rows = rows
 
     def get_row_structure_from_type(self, row_type):
         if len(self.structure.row_structures) == 0:
-            raise Exception("No row structures")
+            raise RowStructException("No row structures")
         if len(self.structure.row_structures) == 1:
             return self.structure.row_structures[0]
-        row_structure = [row_struct for row_struct in self.structure.row_structures
-                         if re.match(row_struct.type, row_type)][0]
+        matching_row_structure = [row_struct for row_struct in self.structure.row_structures
+                         if re.match(row_struct.type, row_type)]
 
-        if not row_structure:
-            raise Exception("Could not find row structure of type '" + row_type + "'")
+        if len(matching_row_structure) == 0:
+            return "Could not find row structure matching structure '" + row_type + "'"
+        if len(matching_row_structure) > 1:
+            return "More than one row structure matching structure '" + row_type + "'"
 
-        return row_structure
+        return matching_row_structure[0]
 
     def parse_groups(self):
         """
         Parses a group of a rows with a give common key
-        :returns: an array og rows with the same key
+        :returns: an array of grouped rows with the same key
         """
         groups = {}
         for idx, row in enumerate(self.rows):
@@ -195,6 +200,7 @@ def main():
             print("Checking file " + csv_filename)
         if args.file_structure is None:
             args.file_structure = get_struct_from_pattern(config_obj, csv_filename)
+        print('File structure', args.file_structure.name)
         csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
         flat_file = FlatFile(csv_file, args.file_structure)
         result = flat_file.run_defined_tests()
@@ -208,6 +214,7 @@ def main():
             if not args.quiet:
                 print("Results logged in file " + output_filename)
         csv_file.close()
+
 
 if __name__ == "__main__":
     main()
