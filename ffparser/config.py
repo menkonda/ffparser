@@ -1,7 +1,8 @@
 import json
 import os
 import platform
-
+import glob
+import re
 
 def get_conf_directory():
     """
@@ -74,8 +75,6 @@ def get_pos_file_struct_from_dict(fs_name, fs_dict):
                                 row_structures, decimal_sep, file_pattern, tests, encoding, quotechar, carriage_return,
                                 type_limits)
 
-
-CONFIG_FILE = os.path.join(get_conf_directory(), "config.json")
 GLOBAL_CONFIG_FILE = os.path.join(get_conf_directory(), "global_config.json")
 
 
@@ -209,38 +208,37 @@ class PosFlatFileStructure(object):
         self.type_limits = type_limits
 
 
-
-
 class ParserConfig(object):
     """
     Object containing the configuration of the parser. Among other, a list of available
     """
-    def __init__(self, file_path):
+    def __init__(self, struct_dir_path):
         """
         Instantiates a new config object
         :param file_path: path to a json with following structure
         """
-        self.file_path = file_path
+        self.struct_dir_path = struct_dir_path
         self.file_structures = {}
-        conf_file = open(file_path, "r")
-        cfg = json.load(conf_file)
+        struct_filenames = glob.glob(os.path.join(self.struct_dir_path,"struct_*.json"))
 
-        for file_structure_name in cfg['file_structures']:
-            file_structure_dict = cfg['file_structures'][file_structure_name]
-            if file_structure_dict['conf_type'] == "csv":
-                self.file_structures[file_structure_name] = get_csv_file_struct_from_dict(file_structure_name,
-                                                                                          file_structure_dict)
-            if file_structure_dict['conf_type'] == "pos":
-                self.file_structures[file_structure_name] = get_pos_file_struct_from_dict(file_structure_name,
-                                                                                          file_structure_dict)
+        for struct_filename in struct_filenames:
+            with open(struct_filename, 'r') as struct_file:
+                struct_dict = json.load(struct_file)
+            struct_name = re.search("struct_(.*).json", struct_filename).group(1)
+            if struct_dict['conf_type'] == "csv":
+                self.file_structures[struct_name] = get_csv_file_struct_from_dict(struct_name, struct_dict)
+            if struct_dict['conf_type'] == "pos":
+                self.file_structures[struct_name] = get_pos_file_struct_from_dict(struct_name, struct_dict)
 
 
 class GlobalConfig:
     def __init__(self, file_path):
         self.file_path = file_path
-        conf_file = open(file_path, "r")
-        cfg = json.load(conf_file)
+        with open(file_path, "r") as conf_file:
+            cfg = json.load(conf_file)
 
         self.conf_directory = cfg['conf_directory']
         self.plugin_dir = cfg['plugin_dir']
+        self.structures_dir = os.path.join(self.conf_directory, "structures")
+
 

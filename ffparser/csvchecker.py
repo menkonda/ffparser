@@ -72,7 +72,8 @@ class FlatFile(object):
             raise Exception("No row structures")
         if len(self.structure.row_structures) == 1:
             return self.structure.row_structures[0]
-        row_structure = [row_struct for row_struct in self.structure.row_structures if re.match(row_struct.type, row_type)][0]
+        row_structure = [row_struct for row_struct in self.structure.row_structures
+                         if re.match(row_struct.type, row_type)][0]
 
         if not row_structure:
             raise Exception("Could not find row structure of type '" + row_type + "'")
@@ -125,7 +126,7 @@ class FlatFile(object):
 
     def run_test_suite(self, test_list):
         """
-        Run a set of tests with given names
+        Run a set of tests with given names (dev)
         :param test_list: list of tests
         :return:
         """
@@ -146,10 +147,11 @@ def main():
     parser = argparse.ArgumentParser(description='Check a csv file structure')
     parser.add_argument('csv_files', metavar='FILES', nargs='+',
                         help='Files to be checked')
-    parser.add_argument('--config_file', metavar='CONFIG_FILE', help='Configuration file with the file structures.'
-                                                                     ' By default the file is ' + config.CONFIG_FILE,
-                        default=config.CONFIG_FILE)
-    parser.add_argument('--file_structure', metavar='STRUCT_NAME', help='Name of the file structure to use,'
+    parser.add_argument('--config-dir',
+                        metavar='CONFIG-DIR',
+                        help='Directory with the file structures. Default : ' + GLOBAL_CONFIG.structures_dir,
+                        default=GLOBAL_CONFIG.structures_dir)
+    parser.add_argument('--file-structure', metavar='STRUCT_NAME', help='Name of the file structure to use,'
                                                                         ' by default csvchecker detects the '
                                                                         'file structure from filename pattern')
     parser.add_argument('--output-dir', metavar='OUTPUT_DIR', help='Defines the output directory. By default the '
@@ -163,9 +165,9 @@ def main():
     # print(args)
 
     try:
-        config_obj = config.ParserConfig(args.config_file)
+        config_obj = config.ParserConfig(args.config_dir)
     except json.JSONDecodeError as err:
-        print("ERROR: Could not decode", args.config_file, "configuration file due to following error :", err.msg,
+        print("ERROR: Could not decode files in", args.config_dir, "configuration file due to following error :", err.msg,
               "line", err.lineno, "column", err.colno)
         sys.exit(-1)
 
@@ -205,7 +207,7 @@ def main():
                 result.to_csv(output_file)
             if not args.quiet:
                 print("Results logged in file " + output_filename)
-
+        csv_file.close()
 
 if __name__ == "__main__":
     main()

@@ -192,8 +192,9 @@ def check_carriage_return(flat_file_object):
     """
     result = TestCaseResult()
     carriage_return = flat_file_object.structure.carriage_return
-    file = open(flat_file_object.filename, "r", newline='', encoding='utf8')
-    for idx, line in enumerate(file.readlines()):
+    with open(flat_file_object.filename, "r", newline='', encoding='utf8') as file:
+        lines = file.readlines()
+    for idx, line in enumerate(lines):
         if line.endswith("\r\n"):
             if line[-2:] != carriage_return:
                 step_result = TestCaseStepResult(idx + 1, False, 'CARRIAGE_RETURN_ERROR', "Wrong carriage return." +
