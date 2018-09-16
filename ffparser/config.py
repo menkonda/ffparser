@@ -66,7 +66,7 @@ def get_pos_file_struct_from_dict(fs_name, fs_dict):
     type_limits = fs_dict['type_limits']
     row_structures = []
     for row_structure in fs_dict['row_structures']:
-        structure = PosRowStructure(row_structure['type'], row_structure['length'], row_structure['lengths'],
+        structure = PosRowStructure(row_structure['type'], row_structure['lengths'],
                                     row_structure['date_fields'], row_structure['key_pos'],
                                     row_structure['optional_fields'], row_structure['decimal_fields'],
                                     row_structure['digit_fields'])
@@ -114,7 +114,7 @@ class PosRowStructure(object):
     """
     Structure of a row in a positional flat file
     """
-    def __init__(self, row_type, length, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields):
+    def __init__(self, row_type, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields):
         """
         Instantiate a new row structure.
         :param row_type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for
@@ -131,8 +131,8 @@ class PosRowStructure(object):
         :param digit_fields: the fields containing digits. array(integer)
         """
         self.type = row_type
-        self.length = length
         self.lengths = lengths
+        self.length = len(self.lengths)
         self.key_pos = key_pos
         self.optional_fields = optional_fields
         self.decimal_fields = decimal_fields
