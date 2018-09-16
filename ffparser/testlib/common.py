@@ -88,12 +88,19 @@ def check_dates(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-
         row_struct = flat_file_object.get_row_structure_from_type(row_type)
+
+
 
         # DISGUSTING : to be handled with custom exceptions in method get_row_structure_from_type
         if type(row_struct).__name__ == 'str':
-            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT8ERROR', row_struct,
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
+        if len(row) != row_struct.length:
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -127,6 +134,13 @@ def check_required(flat_file_object):
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
+
+        if len(row) != row_struct.length:
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row",
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
         for pos in range(0, row_struct.length):
             if (pos + 1) in row_struct.optional_fields:
                 continue
@@ -149,6 +163,12 @@ def check_field_lengths(flat_file_object):
         row_struct = flat_file_object.get_row_structure_from_type(row_type)
         if type(row_struct).__name__ == 'str':
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
+        if len(row) != row_struct.length:
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -176,6 +196,12 @@ def check_digit_fields(flat_file_object):
         row_struct = flat_file_object.get_row_structure_from_type(row_type)
         if type(row_struct).__name__ == 'str':
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
+        if len(row) != row_struct.length:
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue

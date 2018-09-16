@@ -174,11 +174,11 @@ def main():
     except json.JSONDecodeError as err:
         print("ERROR: Could not decode files in", args.config_dir, "configuration file due to following error :", err.msg,
               "line", err.lineno, "column", err.colno)
-        sys.exit(-1)
+        return -1
 
     if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
         print("Error : Could not load '" + args.file_structure + " structure from config file ")
-        sys.exit(1)
+        return 1
 
     if args.file_structure:
         args.file_structure = config_obj.file_structures[args.file_structure]
@@ -200,6 +200,12 @@ def main():
             print("Checking file " + csv_filename)
         if args.file_structure is None:
             args.file_structure = get_struct_from_pattern(config_obj, csv_filename)
+
+        if args.file_structure is None:
+            if not args.quiet:
+                print("Could not find any file structure for file '" + csv_filename + "'. Skipping")
+            continue
+
         print('File structure', args.file_structure.name)
         csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
         flat_file = FlatFile(csv_file, args.file_structure)
@@ -215,6 +221,9 @@ def main():
                 print("Results logged in file " + output_filename)
         csv_file.close()
 
+        return 0
+
 
 if __name__ == "__main__":
-    main()
+    result = main()
+    sys.exit(result)
