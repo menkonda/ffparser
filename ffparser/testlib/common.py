@@ -1,8 +1,7 @@
 import time
 import os.path
 import csv
-import re
-
+import ffparser.csvchecker
 
 class TestCaseStepResult(object):
     def __init__(self, line_number, status, error_type, message, filename=""):
@@ -80,22 +79,6 @@ class TestSuiteResult(object):
                                      step.error_type, step.message])
 
 
-def get_row_structure_from_type(row_structures, row_type):
-    if len(row_structures) == 0:
-        raise Exception("No row structures")
-    if len(row_structures) == 1:
-        return row_structures[0]
-
-    row_structs = [struct for struct in row_structures if re.match(struct.type,row_type)]
-
-    if len(row_structs) == 0:
-        raise Exception("Could not find row structure of type '" + row_type + "'")
-    if len(row_structs) > 1:
-        raise Exception("More than one row structure corresponding to '" + row_type + "'")
-
-    return row_structs[0]
-
-
 def check_dates(flat_file_object):
     """
     Check the date format of a given csv according to its structure
@@ -105,8 +88,16 @@ def check_dates(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-        #print("DEBUG check_dates :" + str(idx) + " " + str(row_type))
-        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
+
+        row_struct = flat_file_object.get_row_structure_from_type(row_type)
+
+        # DISGUSTING : to be handled with custom exceptions in method get_row_structure_from_type
+        if type(row_struct).__name__ == 'str':
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT8ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
         for pos in row_struct.date_fields:
             date_string = row[pos - 1]
             if date_string == '':
@@ -130,7 +121,12 @@ def check_required(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
+        row_struct = flat_file_object.get_row_structure_from_type(row_type)
+        if type(row_struct).__name__ == 'str':
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
         for pos in range(0, row_struct.length):
             if (pos + 1) in row_struct.optional_fields:
                 continue
@@ -150,7 +146,13 @@ def check_field_lengths(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
+        row_struct = flat_file_object.get_row_structure_from_type(row_type)
+        if type(row_struct).__name__ == 'str':
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
         for fixed_length in row_struct.fixed_lengths:
             field_content = row[fixed_length[0] - 1]
             if field_content == '':
@@ -171,7 +173,13 @@ def check_digit_fields(flat_file_object):
     result = TestCaseResult()
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
-        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
+        row_struct = flat_file_object.get_row_structure_from_type(row_type)
+        if type(row_struct).__name__ == 'str':
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
         for digit_field in row_struct.digit_fields:
             field_content = row[digit_field - 1]
             if field_content == '':
@@ -192,8 +200,9 @@ def check_carriage_return(flat_file_object):
     """
     result = TestCaseResult()
     carriage_return = flat_file_object.structure.carriage_return
-    file = open(flat_file_object.filename, "r", newline='', encoding='utf8')
-    for idx, line in enumerate(file.readlines()):
+    with open(flat_file_object.filename, "r", newline='', encoding='utf8') as file:
+        lines = file.readlines()
+    for idx, line in enumerate(lines):
         if line.endswith("\r\n"):
             if line[-2:] != carriage_return:
                 step_result = TestCaseStepResult(idx + 1, False, 'CARRIAGE_RETURN_ERROR', "Wrong carriage return." +
