@@ -28,11 +28,18 @@ def mdm_to_space_check_quotes(flat_file_object):
             continue
 
         alpha_fields = [field for field in range(1,row_struct.length) if(field not in row_struct.digit_fields and field not in row_struct.decimal_fields)]
-        for alpha_field in alpha_fields:
-            field_content = row[alpha_field - 1]
-            if len(field_content) < 2 or not(field_content[0] == "\"" and field_content[-1] == "\""):
-                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
-                                                 "Missing quote at field " + str(alpha_field),
-                                                 os.path.basename(flat_file_object.filename))
-                result.steps.append(step_result)
+        for idx in range(0, row_struct.length):
+            field_content = row[idx]
+            if (idx+1) in alpha_fields:
+                if len(field_content) < 2 or not(field_content[0] == "\"" and field_content[-1] == "\""):
+                    step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
+                                                     "Missing quote at field " + str(idx +1),
+                                                     os.path.basename(flat_file_object.filename))
+                    result.steps.append(step_result)
+            else:
+                if len(field_content) > 1 and (field_content[0] == "\"" or field_content[-1] == "\""):
+                    step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
+                                                     "Field " + str(idx + 1) + " should not be quoted",
+                                                     os.path.basename(flat_file_object.filename))
+                    result.steps.append(step_result)
     return result
