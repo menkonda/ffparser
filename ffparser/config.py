@@ -3,6 +3,9 @@ import os
 import platform
 import glob
 import re
+import argparse
+
+
 
 def get_conf_directory():
     """
@@ -75,6 +78,15 @@ def get_pos_file_struct_from_dict(fs_name, fs_dict):
                                 row_structures, decimal_sep, file_pattern, tests, encoding, quotechar, carriage_return,
                                 type_limits)
 
+
+def list_structures_from_directories(folder, pattern):
+    struct_filenames = []
+    struct_filenames += glob.glob(os.path.join(folder, pattern))
+    short_filenames = [os.path.basename(struct_filename) for struct_filename in struct_filenames]
+    return "\r\n".join(short_filenames)
+
+
+commands_lookup_table ={'list-all': list_structures_from_directories}
 GLOBAL_CONFIG_FILE = os.path.join(get_conf_directory(), "global_config.json")
 
 
@@ -243,3 +255,21 @@ class GlobalConfig:
         self.structures_dir = os.path.join(self.conf_directory, "structures")
 
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Check a csv file structure')
+    parser.add_argument('structdir', metavar='FILES',
+                        help='Directory where the file structures can be found')
+    parser.add_argument('--pattern', metavar='PATTERN', nargs='+',
+                        help='Pattern name of the structure files', default = 'struct_*.json')
+    args = parser.parse_args()
+
+    struct_filenames = glob.glob(os.path.join(args.structdir, args.pattern))
+    cmd = ""
+
+    while cmd != "exit":
+        cmd = input("->")
+        args = cmd.split(' ')
+        func = args[0]
+        args = args[1:]
+        result =commands_lookup_table[func](*args)
+        print(result)
