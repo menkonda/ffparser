@@ -13,7 +13,20 @@ def mdm_to_space_check_quotes(flat_file_object):
         row = row.replace(flat_file_object.structure.carriage_return,"")
         row = row.split(flat_file_object.structure.sep)
         row_type = row[flat_file_object.structure.type_pos - 1].replace("\"","")
-        row_struct = get_row_structure_from_type(flat_file_object.structure.row_structures, row_type)
+
+        row_struct = flat_file_object.get_row_structure_from_type(row_type)
+        if type(row_struct).__name__ == 'str':
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
+        if len(row) != row_struct.length:
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row",
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
         alpha_fields = [field for field in range(1,row_struct.length) if(field not in row_struct.digit_fields and field not in row_struct.decimal_fields)]
         for alpha_field in alpha_fields:
             field_content = row[alpha_field - 1]
