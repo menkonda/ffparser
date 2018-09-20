@@ -1,7 +1,5 @@
 from setuptools import setup, find_packages
 import os
-import platform
-import json
 import ffparser.config as config
 
 config.create_conf_dirs()
@@ -175,11 +173,4 @@ setup(
     project_urls={  # Optional
     }
 )
-
-# with open(os.path.join(conf_directory, 'global_config.json'),'r') as global_conf_file:
-#     global_conf = json.load(global_conf_file)
-#     for key in global_conf:
-#         if key.endswith('dir'):
-#             if not os.path.exists(global_conf[key]):
-#                 os.makedirs(global_conf[key])
 
