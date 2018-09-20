@@ -14,7 +14,7 @@ CONF_DIR = {
     "linux": "/etc/ffparser",
     "windows": "C:\\Program Files (x86)\\Maissa\\ffparser\\conf"}
 DATA_DIR = {
-    "linux":"/var/lib/ffparser/",
+    "linux": "/var/lib/ffparser/",
     "windows": "C:\\Program Files (x86)\\Maissa\\ffparser\\conf"}
 
 CONF_DATA_TYPES = ['plugins', 'structures', 'schemas']
@@ -22,8 +22,15 @@ SCHEMAS = ["csv", "pos"]
 
 GLOBAL_CONFIG_PATH = os.path.join(CONF_DIR[system], "global_config.json")
 
-def build_global_conf_file(path = GLOBAL_CONFIG_PATH):
-    content = {}
+
+def build_global_conf_file(path=GLOBAL_CONFIG_PATH):
+    """
+    Build global_config file from constants defined above. This function is meant to be used during the install
+    :param path: (optional) path where the global config file should be installed. By default the config directory
+    defined in the constants
+    :return: a dictionary with the content of the global_config file
+    """
+    content = dict()
     content['conf_dir'] = CONF_DIR[system]
     for type in CONF_DATA_TYPES:
         content[type + "_dir"] = os.path.join(DATA_DIR[system], type)
@@ -36,7 +43,12 @@ def build_global_conf_file(path = GLOBAL_CONFIG_PATH):
 
     return content
 
+
 def create_conf_dirs():
+    """
+    Create the config directories according to the constants
+    :return: None
+    """
     conf_directory = CONF_DIR[system]
 
     if not os.path.exists(conf_directory):
@@ -112,7 +124,7 @@ def list_structures_from_directories(folder, pattern):
     return "\r\n".join(short_filenames)
 
 
-commands_lookup_table ={'list-all': list_structures_from_directories}
+
 
 
 class CsvRowStructure(object):
@@ -246,6 +258,9 @@ class PosFlatFileStructure(object):
 
 
 class GlobalConfig:
+    """
+    Describe the structure of the global config
+    """
     def __init__(self, file_path):
         self.file_path = file_path
         with open(file_path, "r") as conf_file:
@@ -292,7 +307,6 @@ class ParserConfig(object):
                 self.file_structures[struct_name] = get_csv_file_struct_from_dict(struct_name, struct_dict)
             if struct_dict['conf_type'] == "pos":
                 self.file_structures[struct_name] = get_pos_file_struct_from_dict(struct_name, struct_dict)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Check a csv file structure')
