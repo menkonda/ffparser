@@ -1,7 +1,7 @@
 import time
 import os.path
 import csv
-import ffparser.csvchecker
+import ffparser.ffchecker
 
 class TestCaseStepResult(object):
     def __init__(self, line_number, status, error_type, message, filename=""):

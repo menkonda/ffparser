@@ -1,5 +1,0 @@
-{
-  "conf_directory" : "/etc/conf/ffparser",
-  "default_output_directory" : "/tmp/csv_parser_output",
-  "plugin_dir" : "/var/lib/ffparser/plugins"
-}

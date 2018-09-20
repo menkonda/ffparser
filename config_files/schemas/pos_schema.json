@@ -1,0 +1,264 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "conf_type",
+    "sep",
+    "quotechar",
+    "encoding",
+    "type_pos",
+    "date_fmt",
+    "decimal_sep",
+    "tests",
+    "file_pattern",
+    "carriage_return",
+    "row_structures"
+  ],
+  "properties": {
+    "conf_type": {
+      "$id": "#/properties/conf_type",
+      "type": "string",
+      "title": "The Conf_type Schema",
+      "default": "",
+      "examples": [
+        "csv"
+      ],
+      "pattern": "csv|pos"
+    },
+    "sep": {
+      "$id": "#/properties/sep",
+      "type": "string",
+      "title": "The Sep Schema",
+      "default": "",
+      "examples": [
+        ";"
+      ],
+      "pattern": "^(.*)$"
+    },
+    "quotechar": {
+      "$id": "#/properties/quotechar",
+      "type": "string",
+      "title": "The Quotechar Schema",
+      "default": "",
+      "examples": [
+        "\""
+      ],
+      "pattern": "^(.*)$"
+    },
+    "encoding": {
+      "$id": "#/properties/encoding",
+      "type": "string",
+      "title": "The Encoding Schema",
+      "default": "",
+      "examples": [
+        "utf-8"
+      ],
+      "pattern": "^(.*)$"
+    },
+    "type_pos": {
+      "$id": "#/properties/type_pos",
+      "type": "integer",
+      "title": "The Type_pos Schema",
+      "default": 0,
+      "examples": [
+        1
+      ]
+    },
+    "date_fmt": {
+      "$id": "#/properties/date_fmt",
+      "type": "string",
+      "title": "The Date_fmt Schema",
+      "default": "",
+      "examples": [
+        "%Y%m%d"
+      ],
+      "pattern": "^(.*)$"
+    },
+    "decimal_sep": {
+      "$id": "#/properties/decimal_sep",
+      "type": "string",
+      "title": "The Decimal_sep Schema",
+      "default": "",
+      "examples": [
+        "."
+      ],
+      "pattern": "^(.*)$"
+    },
+    "tests": {
+      "$id": "#/properties/tests",
+      "type": "array",
+      "title": "The Tests Schema",
+      "items": {
+        "$id": "#/properties/tests/items",
+        "type": "string",
+        "title": "The Items Schema",
+        "default": "",
+        "examples": [
+          "check_dates",
+          "check_required",
+          "check_field_lengths",
+          "check_digit_fields",
+          "check_decimal"
+        ],
+        "pattern": "^(.*)$"
+      }
+    },
+    "file_pattern": {
+      "$id": "#/properties/file_pattern",
+      "type": "string",
+      "title": "The File_pattern Schema",
+      "default": "",
+      "examples": [
+        "O_RMS_I_SPA_CMDESFOUR_.*csv"
+      ],
+      "pattern": "^(.*)$"
+    },
+    "carriage_return": {
+      "$id": "#/properties/carriage_return",
+      "type": "string",
+      "title": "The Carriage_return Schema",
+      "default": "",
+      "examples": [
+        "\n"
+      ],
+      "pattern": "^(.*)$"
+    },
+    "row_structures": {
+      "$id": "#/properties/row_structures",
+      "type": "array",
+      "title": "The Row_structures Schema",
+      "items": {
+        "$id": "#/properties/row_structures/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": [
+          "type",
+          "length",
+          "date_fields",
+          "key_pos",
+          "optional_fields",
+          "decimal_fields",
+          "digit_fields",
+          "fixed_lengths"
+        ],
+        "properties": {
+          "type": {
+            "$id": "#/properties/row_structures/items/properties/type",
+            "type": "string",
+            "title": "The Type Schema",
+            "default": "",
+            "examples": [
+              "01"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "length": {
+            "$id": "#/properties/row_structures/items/properties/length",
+            "type": "integer",
+            "title": "The Length Schema",
+            "default": 0,
+            "examples": [
+              56
+            ]
+          },
+          "date_fields": {
+            "$id": "#/properties/row_structures/items/properties/date_fields",
+            "type": "array",
+            "title": "The Date_fields Schema",
+            "items": {
+              "$id": "#/properties/row_structures/items/properties/date_fields/items",
+              "type": "integer",
+              "title": "The Items Schema",
+              "default": 0,
+              "examples": [
+                4,
+                7,
+                8,
+                22,
+                23,
+                24,
+                25,
+                36
+              ]
+            }
+          },
+          "key_pos": {
+            "$id": "#/properties/row_structures/items/properties/key_pos",
+            "type": "integer",
+            "title": "The Key_pos Schema",
+            "default": 0,
+            "examples": [
+              1
+            ]
+          },
+          "optional_fields": {
+            "$id": "#/properties/row_structures/items/properties/optional_fields",
+            "type": "array",
+            "title": "The Optional_fields Schema"
+          },
+          "decimal_fields": {
+            "$id": "#/properties/row_structures/items/properties/decimal_fields",
+            "type": "array",
+            "title": "The Decimal_fields Schema",
+            "items": {
+              "$id": "#/properties/row_structures/items/properties/decimal_fields/items",
+              "type": "integer",
+              "title": "The Items Schema",
+              "default": 0,
+              "examples": [
+                34
+              ]
+            }
+          },
+          "digit_fields": {
+            "$id": "#/properties/row_structures/items/properties/digit_fields",
+            "type": "array",
+            "title": "The Digit_fields Schema",
+            "items": {
+              "$id": "#/properties/row_structures/items/properties/digit_fields/items",
+              "type": "integer",
+              "title": "The Items Schema",
+              "default": 0,
+              "examples": [
+                2,
+                3,
+                9,
+                14,
+                15,
+                16,
+                29,
+                30,
+                31,
+                34,
+                45
+              ]
+            }
+          },
+          "fixed_lengths": {
+            "$id": "#/properties/row_structures/items/properties/fixed_lengths",
+            "type": "array",
+            "title": "The Fixed_lengths Schema",
+            "items": {
+              "$id": "#/properties/row_structures/items/properties/fixed_lengths/items",
+              "type": "array",
+              "title": "The Items Schema",
+              "items": {
+                "$id": "#/properties/row_structures/items/properties/fixed_lengths/items/items",
+                "type": "integer",
+                "title": "The Items Schema",
+                "default": 0,
+                "examples": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
