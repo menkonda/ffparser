@@ -4,22 +4,48 @@ import platform
 import glob
 import re
 import argparse
+import jsonschema
 
+system = platform.system().lower()
+if system not in ('linux','windows'):
+    raise Exception("Unknown OS. Must be Linux or Windows")
 
+CONF_DIR = {
+    "linux": "/etc/ffparser",
+    "windows": "C:\\Program Files (x86)\\Maissa\\ffparser\\conf"}
+DATA_DIR = {
+    "linux":"/var/lib/ffparser/",
+    "windows": "C:\\Program Files (x86)\\Maissa\\ffparser\\conf"}
 
-def get_conf_directory():
-    """
-    This function returns the configuration directory depending on the OS
-    :return:
-    """
-    system = platform.system()
-    if system == "Windows":
-        return os.path.normpath(os.getenv("USERPROFILE")) + "\\AppData\\Local\\Maissa\\ffparser"
-    elif system == "Linux":
-        return "/etc/ffparser"
-    else:
-        raise Exception("Unknown OS. Must be Linux or Windows")
+CONF_DATA_TYPES = ['plugins', 'structures', 'schemas']
+SCHEMAS = ["csv", "pos"]
 
+GLOBAL_CONFIG_PATH = os.path.join(CONF_DIR[system], "global_config.json")
+
+def build_global_conf_file(path = GLOBAL_CONFIG_PATH):
+    content = {}
+    content['conf_dir'] = CONF_DIR[system]
+    for type in CONF_DATA_TYPES:
+        content[type + "_dir"] = os.path.join(DATA_DIR[system], type)
+    content['schemas'] = {}
+    for schema in SCHEMAS:
+        content['schemas'][schema] = schema + "_schema.json"
+
+    with open(path, "w") as global_config_file:
+        json.dump(content, global_config_file, sort_keys=True, indent=4, separators=(',', ': '))
+
+    return content
+
+def create_conf_dirs():
+    conf_directory = CONF_DIR[system]
+
+    if not os.path.exists(conf_directory):
+        os.makedirs(conf_directory)
+
+    for data in CONF_DATA_TYPES:
+        data_dir = os.path.join(DATA_DIR[system], data)
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
 
 def get_csv_file_struct_from_dict(fs_name, fs_dict):
     """
@@ -87,7 +113,6 @@ def list_structures_from_directories(folder, pattern):
 
 
 commands_lookup_table ={'list-all': list_structures_from_directories}
-GLOBAL_CONFIG_FILE = os.path.join(get_conf_directory(), "global_config.json")
 
 
 class CsvRowStructure(object):
@@ -220,6 +245,23 @@ class PosFlatFileStructure(object):
         self.type_limits = type_limits
 
 
+class GlobalConfig:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        with open(file_path, "r") as conf_file:
+            cfg = json.load(conf_file)
+
+        self.conf_directory = cfg['conf_dir']
+        self.plugin_dir = cfg['plugins_dir']
+        self.structures_dir = cfg['structures_dir']
+        self.schemas_dir = cfg['schemas_dir']
+        self.schemas = {}
+        for schema in SCHEMAS:
+            with open(os.path.join(self.schemas_dir, cfg['schemas'][schema])) as csv_schema_path:
+                self.schemas[schema] = json.load(csv_schema_path)
+
+
+
 class ParserConfig(object):
     """
     Object containing the configuration of the parser. Among other, a list of available
@@ -233,26 +275,23 @@ class ParserConfig(object):
         self.file_structures = {}
         struct_filenames = glob.glob(os.path.join(self.struct_dir_path,"struct_*.json"))
 
+        global_config = GlobalConfig(GLOBAL_CONFIG_PATH)
+
         for struct_filename in struct_filenames:
             # print(struct_filename)
             with open(struct_filename, 'r') as struct_file:
                 struct_dict = json.load(struct_file)
             struct_name = re.search("struct_(.*).json", struct_filename).group(1)
+            try:
+                jsonschema.validate(struct_dict, global_config.schemas[struct_dict['conf_type']])
+            except jsonschema.exceptions.ValidationError as e :
+                print(struct_filename, e.message)
+                continue
+
             if struct_dict['conf_type'] == "csv":
                 self.file_structures[struct_name] = get_csv_file_struct_from_dict(struct_name, struct_dict)
             if struct_dict['conf_type'] == "pos":
                 self.file_structures[struct_name] = get_pos_file_struct_from_dict(struct_name, struct_dict)
-
-
-class GlobalConfig:
-    def __init__(self, file_path):
-        self.file_path = file_path
-        with open(file_path, "r") as conf_file:
-            cfg = json.load(conf_file)
-
-        self.conf_directory = cfg['conf_directory']
-        self.plugin_dir = cfg['plugin_dir']
-        self.structures_dir = os.path.join(self.conf_directory, "structures")
 
 
 if __name__ == "__main__":

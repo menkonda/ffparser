@@ -12,8 +12,7 @@ import glob
 import time
 import json
 
-GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_FILE)
-
+GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
 
 
 def get_struct_from_pattern(conf_obj, filepath):

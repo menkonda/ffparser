@@ -2,29 +2,10 @@ from setuptools import setup, find_packages
 import os
 import platform
 import json
-from ffparser.config import get_conf_directory
+import ffparser.config as config
 
-system = platform.system()
-conf_directory = get_conf_directory()
-if system == "Windows":
-    plugin_dir = os.path.join(conf_directory, "plugins")
-    structures_dir = os.path.join(conf_directory, "structures")
-elif system == "Linux":
-    plugin_dir = "/var/lib/ffparser/plugins"
-    structures_dir = "/var/lib/ffparser/structures"
-else:
-    raise Exception("Unknown OS. Must be Linux or Windows")
-
-for folder in [conf_directory, plugin_dir, structures_dir]:
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-global_config_dict = {'conf_directory': conf_directory, 'plugin_dir': plugin_dir}
-
-with open(os.path.join(conf_directory, 'global_config.json'), "w") as global_config_file:
-    json.dump(global_config_dict, global_config_file, sort_keys=True, indent=4, separators=(',', ': '))
-
-here = os.path.abspath(os.path.dirname(__file__))
+config.create_conf_dirs()
+config.build_global_conf_file()
 
 setup(
     # This is the name of your project. The first time you publish this
@@ -46,7 +27,7 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.2.10',  # Required
+    version='0.3.0',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -138,7 +119,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    # install_requires=['peppercorn'],  # Optional
+    install_requires=['jsonschema'],  # Optional
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -167,7 +148,7 @@ setup(
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files
     #
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
-    data_files=[(conf_directory, ['config_files/config.json'])],
+    data_files=[(os.path.join(config.DATA_DIR[config.system], "schemas"), ['config_files/schemas/' + sch + "_schema.json" for sch in config.SCHEMAS])],
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
@@ -195,5 +176,10 @@ setup(
     }
 )
 
-
+# with open(os.path.join(conf_directory, 'global_config.json'),'r') as global_conf_file:
+#     global_conf = json.load(global_conf_file)
+#     for key in global_conf:
+#         if key.endswith('dir'):
+#             if not os.path.exists(global_conf[key]):
+#                 os.makedirs(global_conf[key])
 
