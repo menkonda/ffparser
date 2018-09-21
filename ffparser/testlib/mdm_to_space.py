@@ -22,7 +22,8 @@ def mdm_to_space_check_quotes(flat_file_object):
             continue
 
         if len(row) != row_struct.length:
-            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row",
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
