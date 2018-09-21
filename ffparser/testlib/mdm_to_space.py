@@ -28,7 +28,7 @@ def mdm_to_space_check_quotes(flat_file_object):
             result.steps.append(step_result)
             continue
 
-        alpha_fields = [field for field in range(1,row_struct.length) if(field not in row_struct.digit_fields and field not in row_struct.decimal_fields)]
+        alpha_fields = [field for field in range(1, row_struct.length + 1) if(field not in row_struct.digit_fields and field not in row_struct.decimal_fields)]
         for i in range(0, row_struct.length):
             field_content = row[i]
             if (i+1) in alpha_fields:
