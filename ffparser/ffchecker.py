@@ -168,27 +168,32 @@ def main():
     args = parser.parse_args()
     # print(args)
 
-    try:
-        config_obj = config.ParserConfig(args.config_dir)
-    except json.JSONDecodeError as err:
-        print("ERROR: Could not decode files in", args.config_dir, "configuration file due to following error :", err.msg,
-              "line", err.lineno, "column", err.colno)
-        return -1
-
-    if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
-        print("Error : Could not load '" + args.file_structure + " structure from config file ")
-        return 1
-
-    if args.file_structure:
-        args.file_structure = config_obj.file_structures[args.file_structure]
-
     if not args.output_dir:
         args.output_dir = os.getcwd()
 
     output_filename = os.path.join(args.output_dir, "test_" + time.strftime("%Y%m%d%H%M%S") + ".csv")
-    with open(output_filename, "w", newline='') as output_file:
-        csv_writer = csv.writer(output_file, delimiter=';', quotechar="\"")
-        csv_writer.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
+    try:
+        output_file = open(output_filename,"w",newline='')
+    except FileNotFoundError as e:
+        print("ERROR. Could not open file ", output_filename)
+        return -2
+
+    output_csv = csv.writer(output_file, delimiter=';', quotechar="\"")
+    output_csv.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
+
+    try:
+        config_obj = config.ParserConfig(args.config_dir)
+    except config.StructureParseException as err:
+        output_csv.writerow([err.src_file,'','False','JSON_STRUCTURES_ERROR', err.args[0]])
+        print(err.args[0])
+        return -1
+
+    if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
+        print("Error : Could not load '" + args.file_structure + " structure from available structures ")
+        return 1
+
+    if args.file_structure:
+        args.file_structure = config_obj.file_structures[args.file_structure]
 
     csv_files = []
     for csv_file in args.csv_files:
@@ -205,7 +210,7 @@ def main():
                 print("Could not find any file structure for file '" + csv_filename + "'. Skipping")
             continue
 
-        print('File structure', args.file_structure.name)
+        # print('File structure', args.file_structure.name)
         csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
         flat_file = FlatFile(csv_file, args.file_structure)
         result = flat_file.run_defined_tests()

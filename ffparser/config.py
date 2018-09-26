@@ -23,6 +23,11 @@ SCHEMAS = ["csv", "pos"]
 GLOBAL_CONFIG_PATH = os.path.join(CONF_DIR[system], "global_config.json")
 
 
+class StructureParseException(Exception):
+    def __init__(self, msg, src_file):
+        Exception.__init__(self, msg)
+        self.src_file = src_file
+
 def build_global_conf_file(path=GLOBAL_CONFIG_PATH):
     """
     Build global_config file from constants defined above. This function is meant to be used during the install
@@ -294,8 +299,13 @@ class ParserConfig(object):
 
         for struct_filename in struct_filenames:
             # print(struct_filename)
-            with open(struct_filename, 'r') as struct_file:
-                struct_dict = json.load(struct_file)
+            try:
+                with open(struct_filename, 'r') as struct_file:
+                    struct_dict = json.load(struct_file)
+            except json.JSONDecodeError as err:
+                msg = "ERROR: Could not decode " + struct_filename + " configuration file due to following error : " \
+                      + err.msg + " line " + str(err.lineno) + " column " + str(err.colno)
+                raise StructureParseException(msg,struct_filename)
             struct_name = re.search("struct_(.*).json", struct_filename).group(1)
             try:
                 jsonschema.validate(struct_dict, global_config.schemas[struct_dict['conf_type']])
