@@ -1,7 +1,6 @@
 import time
 import os.path
 import csv
-import ffparser.ffchecker
 
 class TestCaseStepResult(object):
     def __init__(self, line_number, status, error_type, message, filename=""):
@@ -89,8 +88,6 @@ def check_dates(flat_file_object):
     for idx, row in enumerate(flat_file_object.rows):
         row_type = row[flat_file_object.structure.type_pos - 1]
         row_struct = flat_file_object.get_row_structure_from_type(row_type)
-
-
 
         # DISGUSTING : to be handled with custom exceptions in method get_row_structure_from_type
         if type(row_struct).__name__ == 'str':

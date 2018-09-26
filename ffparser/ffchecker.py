@@ -10,7 +10,7 @@ import argparse
 import sys
 import glob
 import time
-import json
+import traceback
 
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
 
@@ -35,9 +35,19 @@ def get_struct_from_pattern(conf_obj, filepath):
 
     return structures[0]
 
+
 class RowStructException(Exception):
     def __init__(self,  message):
         self.message = message
+
+
+class TestExecException(Exception):
+    def __init__(self, msg, filename, test_name):
+        Exception.__init__(self, msg)
+        self.msg = msg
+        self.filename = filename
+        self.test_name = test_name
+
 
 class FlatFile(object):
     def __init__(self, file, structure):
@@ -116,7 +126,12 @@ class FlatFile(object):
             if test_name in dir(module):
                 test_function = getattr(module, test_name)
                 del module
-                return test_function(self)
+                try:
+                    test_result = test_function(self)
+                    return test_result
+                except Exception as err:
+                    msg = err.args[0] + ". Error during execution of test " + test_name
+                    raise TestExecException(msg, self.filename, test_name)
             del module
 
         for importer, modname, ispkg in pkgutil.iter_modules([GLOBAL_CONFIG.plugin_dir]):
@@ -124,7 +139,12 @@ class FlatFile(object):
             if test_name in dir(module):
                 test_function = getattr(module, test_name)
                 del module
-                return test_function(self)
+                try:
+                    test_result = test_function(self)
+                    return test_result
+                except Exception as err:
+                    msg = err.args[0] + ". Error during execution of test " + test_name
+                    raise TestExecException(msg, self.filename, test_name)
             del module
         raise Exception("Could not find the test " + test_name + " in modules")
 
@@ -166,14 +186,13 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true', help='If enabled no result will be prompted on screen')
 
     args = parser.parse_args()
-    # print(args)
 
     if not args.output_dir:
         args.output_dir = os.getcwd()
 
     output_filename = os.path.join(args.output_dir, "test_" + time.strftime("%Y%m%d%H%M%S") + ".csv")
     try:
-        output_file = open(output_filename,"w",newline='')
+        output_file = open(output_filename, "w", newline='')
     except FileNotFoundError as e:
         print("ERROR. Could not open file ", output_filename)
         return -2
@@ -213,19 +232,28 @@ def main():
         # print('File structure', args.file_structure.name)
         csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
         flat_file = FlatFile(csv_file, args.file_structure)
-        result = flat_file.run_defined_tests()
+        try:
+            test_result = flat_file.run_defined_tests()
+        except TestExecException as err:
+            output_csv.writerow([err.filename, '', 'False', 'TEST_EXEC_ERROR_' + err.test_name, err.msg])
+            if not args.quiet and args.verbose:
+                print("Error while executing test " + err.test_name + " on file " + err.filename
+                      + ". Skipping testing of file " + err.filename + ".")
+                print(traceback.format_exc())
+            continue
+
         if not args.quiet and args.verbose:
-            print(result)
+            print(test_result)
         if not args.quiet:
-            print("Found " + str(result.count_failed()) + " errors in file " + csv_filename)
+            print("Found " + str(test_result.count_failed()) + " errors in file " + csv_filename)
         if not args.no_output:
-            with open(output_filename, "a", newline='') as output_file:
-                result.to_csv(output_file)
+            test_result.to_csv(output_file)
             if not args.quiet:
                 print("Results logged in file " + output_filename)
         csv_file.close()
 
-        return 0
+    output_file.close()
+    return 0
 
 
 if __name__ == "__main__":
