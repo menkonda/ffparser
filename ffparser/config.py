@@ -86,7 +86,8 @@ def get_csv_file_struct_from_dict(fs_name, fs_dict):
         structure = CsvRowStructure(row_structure['type'], row_structure['length'],
                                     row_structure['date_fields'], row_structure['key_pos'],
                                     row_structure['optional_fields'], row_structure['decimal_fields'],
-                                    row_structure['digit_fields'], row_structure["fixed_lengths"])
+                                    row_structure['digit_fields'], row_structure["fixed_lengths"],
+                                    row_structure['fixed_values'])
         row_structures.append(structure)
 
     return CsvFlatFileStructure(fs_name, conf_type, type_pos, date_fmt,  row_structures, decimal_sep, file_pattern,
@@ -115,7 +116,7 @@ def get_pos_file_struct_from_dict(fs_name, fs_dict):
         structure = PosRowStructure(row_structure['type'], row_structure['lengths'],
                                     row_structure['date_fields'], row_structure['key_pos'],
                                     row_structure['optional_fields'], row_structure['decimal_fields'],
-                                    row_structure['digit_fields'])
+                                    row_structure['digit_fields'], row_structure['fixed_values'])
         row_structures.append(structure)
     return PosFlatFileStructure(fs_name, conf_type, type_pos, date_fmt,
                                 row_structures, decimal_sep, file_pattern, tests, encoding, quotechar, carriage_return,
@@ -137,7 +138,7 @@ class CsvRowStructure(object):
     Structure of a row in a csv flat file
     """
     def __init__(self, row_type, length, date_fields, key_pos, optional_fields, decimal_fields, digit_fields,
-                 fixed_lengths):
+                 fixed_lengths, fixed_values):
         """
         Instantiate a new row structure.
         :param row_type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for
@@ -162,13 +163,15 @@ class CsvRowStructure(object):
         self.digit_fields = digit_fields
         self.date_fields = date_fields
         self.fixed_lengths = fixed_lengths
+        self.fixed_values = fixed_values
 
 
 class PosRowStructure(object):
     """
     Structure of a row in a positional flat file
     """
-    def __init__(self, row_type, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields):
+    def __init__(self, row_type, lengths, date_fields, key_pos, optional_fields, decimal_fields, digit_fields,
+                 fixed_values):
         """
         Instantiate a new row structure.
         :param row_type: The type of the row. Usuallly, a row type is a letter. For example "E" for "En-tête", "L" for
@@ -192,7 +195,7 @@ class PosRowStructure(object):
         self.decimal_fields = decimal_fields
         self.digit_fields = digit_fields
         self.date_fields = date_fields
-
+        self.fixed_values = fixed_values
 
 
 class CsvFlatFileStructure(object):
@@ -281,8 +284,7 @@ class GlobalConfig:
                 self.schemas[schema] = json.load(csv_schema_path)
 
 
-
-class ParserConfig(object):
+class FlatFileCheckerConfig(object):
     """
     Object containing the configuration of the parser. Among other, a list of available
     """

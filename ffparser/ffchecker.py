@@ -201,7 +201,7 @@ def main():
     output_csv.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
 
     try:
-        config_obj = config.ParserConfig(args.config_dir)
+        config_obj = config.FlatFileCheckerConfig(args.config_dir)
     except config.StructureParseException as err:
         output_csv.writerow([err.src_file,'','False','JSON_STRUCTURES_ERROR', err.args[0]])
         print(err.args[0])
