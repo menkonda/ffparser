@@ -10,7 +10,7 @@ import argparse
 import sys
 import glob
 import time
-import json
+import traceback
 
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
 
@@ -35,9 +35,19 @@ def get_struct_from_pattern(conf_obj, filepath):
 
     return structures[0]
 
+
 class RowStructException(Exception):
     def __init__(self,  message):
         self.message = message
+
+
+class TestExecException(Exception):
+    def __init__(self, msg, filename, test_name):
+        Exception.__init__(self, msg)
+        self.msg = msg
+        self.filename = filename
+        self.test_name = test_name
+
 
 class FlatFile(object):
     def __init__(self, file, structure):
@@ -116,7 +126,12 @@ class FlatFile(object):
             if test_name in dir(module):
                 test_function = getattr(module, test_name)
                 del module
-                return test_function(self)
+                try:
+                    test_result = test_function(self)
+                    return test_result
+                except Exception as err:
+                    msg = err.args[0] + ". Error during execution of test " + test_name
+                    raise TestExecException(msg, self.filename, test_name)
             del module
 
         for importer, modname, ispkg in pkgutil.iter_modules([GLOBAL_CONFIG.plugin_dir]):
@@ -124,7 +139,12 @@ class FlatFile(object):
             if test_name in dir(module):
                 test_function = getattr(module, test_name)
                 del module
-                return test_function(self)
+                try:
+                    test_result = test_function(self)
+                    return test_result
+                except Exception as err:
+                    msg = err.args[0] + ". Error during execution of test " + test_name
+                    raise TestExecException(msg, self.filename, test_name)
             del module
         raise Exception("Could not find the test " + test_name + " in modules")
 
@@ -166,29 +186,33 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true', help='If enabled no result will be prompted on screen')
 
     args = parser.parse_args()
-    # print(args)
-
-    try:
-        config_obj = config.ParserConfig(args.config_dir)
-    except json.JSONDecodeError as err:
-        print("ERROR: Could not decode files in", args.config_dir, "configuration file due to following error :", err.msg,
-              "line", err.lineno, "column", err.colno)
-        return -1
-
-    if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
-        print("Error : Could not load '" + args.file_structure + " structure from config file ")
-        return 1
-
-    if args.file_structure:
-        args.file_structure = config_obj.file_structures[args.file_structure]
 
     if not args.output_dir:
         args.output_dir = os.getcwd()
 
     output_filename = os.path.join(args.output_dir, "test_" + time.strftime("%Y%m%d%H%M%S") + ".csv")
-    with open(output_filename, "w", newline='') as output_file:
-        csv_writer = csv.writer(output_file, delimiter=';', quotechar="\"")
-        csv_writer.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
+    try:
+        output_file = open(output_filename, "w", newline='')
+    except FileNotFoundError as e:
+        print("ERROR. Could not open file ", output_filename)
+        return -2
+
+    output_csv = csv.writer(output_file, delimiter=';', quotechar="\"")
+    output_csv.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
+
+    try:
+        config_obj = config.ParserConfig(args.config_dir)
+    except config.StructureParseException as err:
+        output_csv.writerow([err.src_file,'','False','JSON_STRUCTURES_ERROR', err.args[0]])
+        print(err.args[0])
+        return -1
+
+    if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
+        print("Error : Could not load '" + args.file_structure + " structure from available structures ")
+        return 1
+
+    if args.file_structure:
+        args.file_structure = config_obj.file_structures[args.file_structure]
 
     csv_files = []
     for csv_file in args.csv_files:
@@ -205,22 +229,31 @@ def main():
                 print("Could not find any file structure for file '" + csv_filename + "'. Skipping")
             continue
 
-        print('File structure', args.file_structure.name)
+        # print('File structure', args.file_structure.name)
         csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
         flat_file = FlatFile(csv_file, args.file_structure)
-        result = flat_file.run_defined_tests()
+        try:
+            test_result = flat_file.run_defined_tests()
+        except TestExecException as err:
+            output_csv.writerow([err.filename, '', 'False', 'TEST_EXEC_ERROR_' + err.test_name, err.msg])
+            if not args.quiet and args.verbose:
+                print("Error while executing test " + err.test_name + " on file " + err.filename
+                      + ". Skipping testing of file " + err.filename + ".")
+                print(traceback.format_exc())
+            continue
+
         if not args.quiet and args.verbose:
-            print(result)
+            print(test_result)
         if not args.quiet:
-            print("Found " + str(result.count_failed()) + " errors in file " + csv_filename)
+            print("Found " + str(test_result.count_failed()) + " errors in file " + csv_filename)
         if not args.no_output:
-            with open(output_filename, "a", newline='') as output_file:
-                result.to_csv(output_file)
+            test_result.to_csv(output_file)
             if not args.quiet:
                 print("Results logged in file " + output_filename)
         csv_file.close()
 
-        return 0
+    output_file.close()
+    return 0
 
 
 if __name__ == "__main__":
