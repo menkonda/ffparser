@@ -275,3 +275,5 @@ def check_decimal(flat_file_object):
                                                  , os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
+
+
