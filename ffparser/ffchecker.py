@@ -1,9 +1,7 @@
 import csv
-from ffparser import config
+from ffparser import config, structure, testcase
 import ffparser.testlib
 import ffparser.testlib.common
-import pkgutil
-import importlib
 import os.path
 import re
 import argparse
@@ -12,41 +10,8 @@ import glob
 import time
 import traceback
 
+
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
-
-
-def get_struct_from_pattern(conf_obj, filepath):
-    """
-    Search in the configuration object for a file structure matching the pattern of the file
-    :param conf_obj: CsvParserConfig object
-    :param filepath: path to the file to parse
-    :return: A CsvFlatFileStructure object
-    """
-    basename = os.path.basename(filepath)
-    conf_structures = conf_obj.file_structures
-
-    structures = [conf_structures[struct_name] for struct_name in conf_structures
-                  if re.match(conf_structures[struct_name].file_pattern, basename)]
-
-    if len(structures) == 0:
-        return None
-    if len(structures) != 1:
-        raise Exception("More than one structure found for this pattern")
-
-    return structures[0]
-
-
-class RowStructException(Exception):
-    def __init__(self,  message):
-        self.message = message
-
-
-class TestExecException(Exception):
-    def __init__(self, msg, filename, test_name):
-        Exception.__init__(self, msg)
-        self.msg = msg
-        self.filename = filename
-        self.test_name = test_name
 
 
 class FlatFile(object):
@@ -56,7 +21,6 @@ class FlatFile(object):
         the lines are parsed with different methods
         :param file: file object of the file to be treated
         :param structure: file structure used to parse the file
-        ..todo::create a mother class and use inheritance to manage different file type
         """
         self.structure = structure
         self.filename = file.name
@@ -81,7 +45,7 @@ class FlatFile(object):
 
     def get_row_structure_from_type(self, row_type):
         if len(self.structure.row_structures) == 0:
-            raise RowStructException("No row structures")
+            raise structure.RowStructureParseException("No row structures")
         if len(self.structure.row_structures) == 1:
             return self.structure.row_structures[0]
         matching_row_structure = [row_struct for row_struct in self.structure.row_structures
@@ -121,32 +85,10 @@ class FlatFile(object):
         :param test_name: name of the test. If two test have the same name, the first will be uesed
         :return: the result of the test inside a TestCaseResult object
         """
-        for importer, modname, ispkg in pkgutil.iter_modules(ffparser.testlib.__path__):
-            module = importlib.import_module("ffparser.testlib." + modname)
-            if test_name in dir(module):
-                test_function = getattr(module, test_name)
-                del module
-                try:
-                    test_result = test_function(self)
-                    return test_result
-                except Exception as err:
-                    msg = err.args[0] + ". Error during execution of test " + test_name
-                    raise TestExecException(msg, self.filename, test_name)
-            del module
-
-        for importer, modname, ispkg in pkgutil.iter_modules([GLOBAL_CONFIG.plugin_dir]):
-            module = importer.find_spec(modname).loader.load_module()
-            if test_name in dir(module):
-                test_function = getattr(module, test_name)
-                del module
-                try:
-                    test_result = test_function(self)
-                    return test_result
-                except Exception as err:
-                    msg = err.args[0] + ". Error during execution of test " + test_name
-                    raise TestExecException(msg, self.filename, test_name)
-            del module
-        raise Exception("Could not find the test " + test_name + " in modules")
+        global_config = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
+        tc_config = testcase.get_test_case_config_from_name(test_name)
+        tc = testcase.TestCase(test_name, tc_config, [global_config.plugin_dir])
+        return tc.run(self)
 
     def run_test_suite(self, test_list):
         """
@@ -154,7 +96,7 @@ class FlatFile(object):
         :param test_list: list of tests
         :return:
         """
-        suite_result = ffparser.testlib.common.TestSuiteResult()
+        suite_result = ffparser.testcase.TestSuiteResult()
         for test in test_list:
             tc_result = self.run_test_case(test)
             suite_result.tcs.append(tc_result)
@@ -201,8 +143,8 @@ def main():
     output_csv.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
 
     try:
-        config_obj = config.FlatFileCheckerConfig(args.config_dir)
-    except config.StructureParseException as err:
+        config_obj = structure.get_structures_from_dir(args.config_dir)
+    except (structure.StructureParseException, structure.RowStructureParseException) as err:
         output_csv.writerow([err.src_file,'','False','JSON_STRUCTURES_ERROR', err.args[0]])
         print(err.args[0])
         return -1
@@ -222,7 +164,7 @@ def main():
         if not args.quiet:
             print("Checking file " + csv_filename)
         if args.file_structure is None:
-            args.file_structure = get_struct_from_pattern(config_obj, csv_filename)
+            args.file_structure = structure.get_struct_from_pattern(config_obj, csv_filename)
 
         if args.file_structure is None:
             if not args.quiet:
@@ -234,7 +176,7 @@ def main():
         flat_file = FlatFile(csv_file, args.file_structure)
         try:
             test_result = flat_file.run_defined_tests()
-        except TestExecException as err:
+        except testcase.TestExecException as err:
             output_csv.writerow([err.filename, '', 'False', 'TEST_EXEC_ERROR_' + err.test_name, err.msg])
             if not args.quiet and args.verbose:
                 print("Error while executing test " + err.test_name + " on file " + err.filename

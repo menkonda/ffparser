@@ -1,5 +1,5 @@
-from ffparser.testlib.common import *
-
+from ffparser.testcase import TestCaseStepResult, TestCaseResult
+import os.path
 
 def imp_article_filename_field(flat_file_object):
     """

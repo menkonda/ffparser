@@ -1,0 +1,46 @@
+{"configs":
+	[
+		{
+		"test_conf_name": "check_dates",
+		"allowed_file_types": "all",
+		"allowed_structures": "all",
+		"required_structure_fields": ["date_fmt"],
+		"required_row_fields": ["date_fields"]
+		},
+		{
+		"test_conf_name": "default",
+		"allowed_file_types": "all",
+		"allowed_structures": "all",
+		"required_structure_fields": "none",
+		"required_row_fields": "none"
+		},
+		{
+		"test_conf_name": "mdm_to_space_check_quotes",
+		"allowed_file_types": ["csv"],
+		"allowed_structures": "all",
+		"required_structure_fields": ["quotechar"],
+		"required_row_fields": ["digit_fields","decimal_fields","date_fields"]
+		},
+		{
+		"test_conf_name": "check_required",
+		"allowed_file_types": "all",
+		"allowed_structures": "all",
+		"required_structure_fields": "none",
+		"required_row_fields": ["optional_fields"]
+		},
+		{
+		"test_conf_name": "check_digit_fields",
+		"allowed_file_types": "all",
+		"allowed_structures": "all",
+		"required_structure_fields": "all",
+		"required_row_fields": ["digit_fields"]
+		},
+		{
+		"test_conf_name": "check_decimal",
+		"allowed_file_types": "all",
+		"allowed_structures": "all",
+		"required_structure_fields": ["decimal_sep"],
+		"required_row_fields": ["decimal_fields"]
+		}
+	]
+}

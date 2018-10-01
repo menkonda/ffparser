@@ -1,4 +1,5 @@
-from ffparser.testlib.common import *
+from ffparser.testcase import TestCaseStepResult, TestCaseResult
+import os.path
 
 
 def mdm_to_space_check_quotes(flat_file_object):
