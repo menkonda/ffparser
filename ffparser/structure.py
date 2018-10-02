@@ -93,6 +93,7 @@ class FlatFileStructure(object):
                 row_structure = RowStructure(row_struct_dict, filetype)
             except RowStructureParseException as err:
                 print("Row structure error in structure", "'" + self.name + "'",err.msg)
+                err.src_file = flat_file_struct_dict['name']
                 raise err
 
             if filetype == 'pos':
