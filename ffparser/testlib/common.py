@@ -1,81 +1,6 @@
 import time
 import os.path
-import csv
-
-class TestCaseStepResult(object):
-    def __init__(self, line_number, status, error_type, message, filename=""):
-        self.status = status
-        self.error_type = error_type
-        self.message = message
-        self.filename = filename
-        self.line_number = line_number
-
-    def __str__(self):
-        return self.filename + ";line " + str(self.line_number) + ";" + str(self.status) + ";" \
-               + self.error_type + ";" + self.message
-
-
-class TestCaseResult(object):
-    def __init__(self):
-        self.status = None
-        self.steps = []
-
-    def set_status(self):
-        if len(self.steps) == 0:
-            self.status = None
-            return None
-
-        for step in self.steps :
-            if not step.status :
-                self.status = False
-                return False
-
-        self.status = True
-        return True
-
-    def __str__(self):
-        return "\n".join([step.__str__() for step in self.steps])
-
-    def count_passed(self):
-        return len([step for step in self.steps if step.status])
-
-    def count_failed(self):
-        return len([step for step in self.steps if not step.status])
-
-
-class TestSuiteResult(object):
-    def __init__(self):
-        self.status = None
-        self.tcs = []
-
-    def set_test_status (self):
-        """
-        Set the status of the test suite according to the test cases result
-        :return: The status of the test suite
-        """
-        if len(self.tcs) == 0:
-            self.status = None
-        for line in self.tcs :
-            if not line.status :
-                self.status = False
-        self.status = True
-        return self.status
-
-    def count_passed(self):
-        return sum([tc.count_passed() for tc in self.tcs])
-
-    def count_failed(self):
-        return sum([tc.count_failed() for tc in self.tcs])
-
-    def __str__(self):
-        return "\n".join([tc.__str__() for tc in self.tcs])
-
-    def to_csv(self, file):
-        csv_writer = csv.writer(file, delimiter=';', quotechar="\"")
-        for tc in self.tcs:
-            for step in tc.steps:
-                csv_writer.writerow([step.filename, str(step.line_number),  str(step.status),
-                                     step.error_type, step.message])
+from ffparser.testcase import TestCaseStepResult, TestCaseResult
 
 
 def check_dates(flat_file_object):
@@ -111,7 +36,7 @@ def check_dates(flat_file_object):
                 date = time.strptime(date_string, flat_file_object.structure.date_fmt)
             except ValueError:
                 step_result = TestCaseStepResult(idx + 1, False, 'DATE_FORMAT', "DATE format is incorrect at position "
-                                                 + str(pos) + " should be " + flat_file_object.structure.date_fmt,
+                                                 + str(pos) + " should be '" + flat_file_object.structure.date_fmt + "'",
                                                  os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
@@ -213,8 +138,8 @@ def check_digit_fields(flat_file_object):
                 continue
             if not field_content.isdigit():
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
-                                                 "Field should be numeric at field " + str(digit_field) + " : "
-                                                 + field_content, os.path.basename(flat_file_object.filename))
+                                                 "Field should be numeric at field " + str(digit_field) + " : '"
+                                                 + field_content + "'", os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
 
@@ -270,8 +195,40 @@ def check_decimal(flat_file_object):
                 continue
 
             if not field_content.replace(flat_file_object.structure.decimal_sep,'').isdigit():
+                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(decimal_field) +
+                                                 " should be numeric with separator '" + field_content + "'"
+                                                 , os.path.basename(flat_file_object.filename))
+                result.steps.append(step_result)
+    return result
+
+
+def check_fixed_values(flat_file_object):
+    result = TestCaseResult()
+    for idx, row in enumerate(flat_file_object.rows):
+        row_type = row[flat_file_object.structure.type_pos - 1]
+        row_struct = flat_file_object.get_row_structure_from_type(row_type)
+
+        if type(row_struct).__name__ == 'str':
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', row_struct,
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
+        if len(row) != row_struct.length:
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+            continue
+
+        for decimal_field in row_struct.decimal_fields:
+            field_content = row[decimal_field - 1]
+            if field_content == '':
+                continue
+
+            if not field_content.replace(flat_file_object.structure.decimal_sep, '').isdigit():
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(idx + 1) +
-                                                 "should be numeric with separator" + field_content
+                                                 "should be numeric with separator '" + field_content + "'"
                                                  , os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
