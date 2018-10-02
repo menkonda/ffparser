@@ -15,35 +15,45 @@ GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
 
 
 class FlatFile(object):
-    def __init__(self, file, structure):
+    def __init__(self, file, file_structure):
         """
         Object holding the data and the file structure of a flat file. According to the file type "csv" or "pos"
         the lines are parsed with different methods
         :param file: file object of the file to be treated
-        :param structure: file structure used to parse the file
+        :param file_structure: file structure used to parse the file
         """
-        self.structure = structure
+        self.structure = file_structure
         self.filename = file.name
-        if structure.conf_type == 'csv':
+        # if the file structure is not csv
+        if file_structure.conf_type == 'csv':
             rows = list(csv.reader(file, delimiter=self.structure.sep, quotechar="\""))
-        elif structure.conf_type == 'pos':
+        elif file_structure.conf_type == 'pos':
+            # strip is used to remove carriage return
             raw_rows = [line.rstrip() for line in file]
             rows = []
             for idx, raw_row in enumerate(raw_rows):
                 row = []
-                index = 0
+                line_index = 0
+                # to correctly cut the fields we need to refer to the correct row structure. For this we use a line type
+                # which start and stop positions are defined in the structure object
                 row_type = raw_row[self.structure.type_limits[0] - 1:self.structure.type_limits[1]]
                 row_structure = self.get_row_structure_from_type(row_type)
                 for length in row_structure.lengths:
-                    row.append(raw_row[index:index + length])
-                    index = index + length
+                    # appends a field starting with the current position and ending at field length
+                    row.append(raw_row[line_index:line_index + length])
+                    line_index = line_index + length
                 rows.append(row)
         else:
-            raise Exception("Structure conf_type must be 'pos' or 'csv'. Not " + structure.conf_type)
+            raise Exception("Structure conf_type must be 'pos' or 'csv'. Not " + file_structure.conf_type)
 
         self.rows = rows
 
     def get_row_structure_from_type(self, row_type):
+        """
+        Finds a row structure with the correct type within row structures available in the FlatFile object
+        :param row_type: row type as a string. Regex can be used
+        :return: a RowStructure object
+        """
         if len(self.structure.row_structures) == 0:
             raise structure.RowStructureParseException("No row structures")
         if len(self.structure.row_structures) == 1:
@@ -92,7 +102,7 @@ class FlatFile(object):
 
     def run_test_suite(self, test_list):
         """
-        Run a set of tests with given names (dev)
+        Run a set of tests with given names
         :param test_list: list of tests
         :return:
         """
@@ -129,6 +139,7 @@ def main():
 
     args = parser.parse_args()
 
+    # default output is current directory
     if not args.output_dir:
         args.output_dir = os.getcwd()
 
@@ -142,6 +153,7 @@ def main():
     output_csv = csv.writer(output_file, delimiter=';', quotechar="\"")
     output_csv.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
 
+    
     try:
         config_obj = structure.get_structures_from_dir(args.config_dir)
     except (structure.StructureParseException, structure.RowStructureParseException) as err:
@@ -149,7 +161,7 @@ def main():
         print(err.args[0])
         return -1
 
-    if args.file_structure is not None and args.file_structure not in config_obj.file_structures:
+    if args.file_structure and args.file_structure not in config_obj.file_structures:
         print("Error : Could not load '" + args.file_structure + " structure from available structures ")
         return 1
 
@@ -171,7 +183,6 @@ def main():
                 print("Could not find any file structure for file '" + csv_filename + "'. Skipping")
             continue
 
-        # print('File structure', args.file_structure.name)
         csv_file = open(csv_filename, "r", encoding=args.file_structure.encoding)
         flat_file = FlatFile(csv_file, args.file_structure)
         try:
@@ -193,6 +204,7 @@ def main():
             if not args.quiet:
                 print("Results logged in file " + output_filename)
         csv_file.close()
+        args.file_structure = None
 
     output_file.close()
     return 0

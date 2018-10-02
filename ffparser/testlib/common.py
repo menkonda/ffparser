@@ -2,6 +2,7 @@ import time
 import os.path
 from ffparser.testcase import TestCaseStepResult, TestCaseResult
 
+
 def check_dates(flat_file_object):
     """
     Check the date format of a given csv according to its structure
@@ -35,7 +36,7 @@ def check_dates(flat_file_object):
                 date = time.strptime(date_string, flat_file_object.structure.date_fmt)
             except ValueError:
                 step_result = TestCaseStepResult(idx + 1, False, 'DATE_FORMAT', "DATE format is incorrect at position "
-                                                 + str(pos) + " should be " + flat_file_object.structure.date_fmt,
+                                                 + str(pos) + " should be '" + flat_file_object.structure.date_fmt + "'",
                                                  os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
@@ -137,8 +138,8 @@ def check_digit_fields(flat_file_object):
                 continue
             if not field_content.isdigit():
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
-                                                 "Field should be numeric at field " + str(digit_field) + " : "
-                                                 + field_content, os.path.basename(flat_file_object.filename))
+                                                 "Field should be numeric at field " + str(digit_field) + " : '"
+                                                 + field_content + "'", os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
 
@@ -194,8 +195,8 @@ def check_decimal(flat_file_object):
                 continue
 
             if not field_content.replace(flat_file_object.structure.decimal_sep,'').isdigit():
-                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(idx + 1) +
-                                                 "should be numeric with separator" + field_content
+                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(decimal_field) +
+                                                 " should be numeric with separator '" + field_content + "'"
                                                  , os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
@@ -227,7 +228,7 @@ def check_fixed_values(flat_file_object):
 
             if not field_content.replace(flat_file_object.structure.decimal_sep, '').isdigit():
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(idx + 1) +
-                                                 "should be numeric with separator" + field_content
+                                                 "should be numeric with separator '" + field_content + "'"
                                                  , os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
