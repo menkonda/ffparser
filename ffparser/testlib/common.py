@@ -221,14 +221,14 @@ def check_fixed_values(flat_file_object):
             result.steps.append(step_result)
             continue
 
-        for decimal_field in row_struct.decimal_fields:
-            field_content = row[decimal_field - 1]
+        for fixed_value in row_struct.fixed_values:
+            field_content = row[fixed_value[0] - 1]
             if field_content == '':
                 continue
 
-            if not field_content.replace(flat_file_object.structure.decimal_sep, '').isdigit():
-                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(idx + 1) +
-                                                 "should be numeric with separator '" + field_content + "'"
+            if field_content != fixed_value[1]:
+                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(fixed_value[0]) +
+                                                 "should be '" + fixed_value[1] + "' instead of '" + field_content + "'."
                                                  , os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result

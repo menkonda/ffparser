@@ -41,6 +41,13 @@
 		"allowed_structures": "all",
 		"required_structure_fields": ["decimal_sep"],
 		"required_row_fields": ["decimal_fields"]
+		},
+        {
+		"test_conf_name": "check_fixed_values",
+		"allowed_file_types": "all",
+		"allowed_structures": "all",
+		"required_structure_fields": "none",
+		"required_row_fields": ["fixed_values"]
 		}
 	]
 }
