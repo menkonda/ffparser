@@ -5,7 +5,7 @@ import re
 
 CSV_FILE_STRUCT_MANDATORY_PROPS = ["name","conf_type","sep","quotechar","encoding","type_pos","date_fmt","decimal_sep","tests","file_pattern","carriage_return","row_structures"]
 CSV_ROW_MANDATORY_PROPS = ['length', 'date_fields', 'key_pos', 'optional_fields', 'decimal_fields', 'digit_fields',
-                           'fixed_lengths', 'fixed_values']
+                           'fixed_lengths']
 
 POS_FILE_STRUCT_MANDATORY_PROPS = ["name","conf_type","encoding","type_pos","date_fmt","decimal_sep","tests","file_pattern","carriage_return","row_structures"]
 POS_ROW_MANDATORY_PROPS = ['lengths','date_fields', 'key_pos', 'decimal_fields', 'digit_fields']
