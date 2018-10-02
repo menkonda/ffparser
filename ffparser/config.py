@@ -76,10 +76,6 @@ class GlobalConfig:
         self.structures_dir = cfg['structures_dir']
         self.schemas_dir = cfg['schemas_dir']
         self.test_configs = cfg['test_configs']
-        self.schemas = {}
-        for schema in SCHEMAS:
-            with open(os.path.join(self.schemas_dir, cfg['schemas'][schema])) as csv_schema_path:
-                self.schemas[schema] = json.load(csv_schema_path)
 
 
 if __name__ == "__main__":

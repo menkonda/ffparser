@@ -32,7 +32,7 @@
 		"test_conf_name": "check_digit_fields",
 		"allowed_file_types": "all",
 		"allowed_structures": "all",
-		"required_structure_fields": "all",
+		"required_structure_fields": "none",
 		"required_row_fields": ["digit_fields"]
 		},
 		{
