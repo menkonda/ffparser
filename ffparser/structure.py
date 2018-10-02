@@ -121,6 +121,9 @@ def get_structure_from_json(file_path):
               + err.msg + " line " + str(err.lineno) + " column " + str(err.colno)
         raise StructureParseException(msg, file_path)
 
+    if 'name' not in structure_dict:
+        msg = "ERROR: 'name' field is mandatory"
+        raise StructureParseException(msg, file_path)
     result = FlatFileStructure(structure_dict)
 
     return result
