@@ -1,5 +1,6 @@
 import csv
 from ffparser import config, structure, testcase
+from ffparser.testcase import TestExecException
 import ffparser.testlib
 import ffparser.testlib.common
 import os.path
@@ -8,7 +9,6 @@ import argparse
 import sys
 import glob
 import time
-import traceback
 
 
 GLOBAL_CONFIG = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
@@ -187,12 +187,11 @@ def main():
         flat_file = FlatFile(csv_file, args.file_structure)
         try:
             test_result = flat_file.run_defined_tests()
-        except testcase.TestExecException as err:
+        except TestExecException as err:
             output_csv.writerow([err.filename, '', 'False', 'TEST_EXEC_ERROR_' + err.test_name, err.msg])
             if not args.quiet and args.verbose:
                 print("Error while executing test " + err.test_name + " on file " + err.filename
                       + ". Skipping testing of file " + err.filename + ".")
-                print(traceback.format_exc())
             continue
 
         if not args.quiet and args.verbose:

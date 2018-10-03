@@ -28,15 +28,21 @@ def imp_article_check_cug_length(flat_file_object):
     available_cug_lengths = [6, 9]
     cug_field_nrs = [4, 6]
     for idx, row in enumerate(flat_file_object.rows):
+        if len(row) != 25:
+            step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
+                                             + str(len(row)) + " fields instead of " + str(25),
+                                             os.path.basename(flat_file_object.filename))
+            result.steps.append(step_result)
+
         for field_nr in cug_field_nrs:
-            fied_content = row[field_nr - 1]
-            if fied_content == '':
+            field_content = row[field_nr - 1]
+            if field_content == '':
                 continue
-            if len(fied_content) not in available_cug_lengths:
+            if len(field_content) not in available_cug_lengths:
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
                                                  "Field " + str(field_nr) + " should contain CUG with length "
                                                  + " or ".join([str(length) for length in available_cug_lengths]) +
-                                                 ". Instead of'" + fied_content + "'.",
+                                                 ". Instead of'" + field_content + "'.",
                                                  os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
