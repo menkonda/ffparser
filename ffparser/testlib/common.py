@@ -23,7 +23,8 @@ def check_dates(flat_file_object):
 
         if len(row) != row_struct.length:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length)
+                                             + ". Row type '" + row_type + "'",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -33,10 +34,11 @@ def check_dates(flat_file_object):
             if date_string == '':
                 continue
             try:
-                date = time.strptime(date_string, flat_file_object.structure.date_fmt)
+                time.strptime(date_string, flat_file_object.structure.date_fmt)
             except ValueError:
                 step_result = TestCaseStepResult(idx + 1, False, 'DATE_FORMAT', "DATE format is incorrect at position "
-                                                 + str(pos) + " should be '" + flat_file_object.structure.date_fmt + "'",
+                                                 + str(pos) + " should be '" + flat_file_object.structure.date_fmt +
+                                                 "'. Row type '" + row_type + "'",
                                                  os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
@@ -60,7 +62,8 @@ def check_required(flat_file_object):
 
         if len(row) != row_struct.length:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length)
+                                             + ". Row type '" + row_type + "'",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -68,9 +71,12 @@ def check_required(flat_file_object):
         for pos in range(0, row_struct.length):
             if (pos + 1) in row_struct.optional_fields:
                 continue
-            if row[pos] == '':
+            field_content = row[pos]
+            if (flat_file_object.structure.conf_type == 'csv' and field_content == '') \
+                    or (flat_file_object.structure.conf_type == 'pos' and field_content == " "*len(field_content)):
                 step_result = TestCaseStepResult(idx + 1, False, 'REQUIRED_FIELD', "Missing required field at position "
-                                             + str(pos + 1), os.path.basename(flat_file_object.filename))
+                                                 + str(pos + 1) + ". Row type '" + row_type + "'",
+                                                 os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
 
@@ -93,7 +99,8 @@ def check_field_lengths(flat_file_object):
 
         if len(row) != row_struct.length:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length)
+                                             + ". Row type '" + row_type + "'.",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -104,7 +111,9 @@ def check_field_lengths(flat_file_object):
                 continue
             if len(field_content) != fixed_length[1]:
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_LENGTH_ERROR', "Wrong field length at position "
-                                                 + str(fixed_length[0]) + ". Should be " + str(fixed_length[1]), os.path.basename(flat_file_object.filename))
+                                                 + str(fixed_length[0]) + ". Should be " + str(fixed_length[1])
+                                                 + ". Row type '" + row_type + "'",
+                                                 os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
 
@@ -127,7 +136,8 @@ def check_digit_fields(flat_file_object):
 
         if len(row) != row_struct.length:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length) +
+                                             ". Row type '" + row_type + "'.",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -139,8 +149,10 @@ def check_digit_fields(flat_file_object):
             if not field_content.isdigit():
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR',
                                                  "Field should be numeric at field " + str(digit_field) + " : '"
-                                                 + field_content + "'", os.path.basename(flat_file_object.filename))
+                                                 + field_content + "'. Row type '" + row_type + "'.",
+                                                 os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
+
     return result
 
 
@@ -184,20 +196,22 @@ def check_decimal(flat_file_object):
 
         if len(row) != row_struct.length:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length)
+                                             + ". Row type '" + row_type + "'.",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
 
         for decimal_field in row_struct.decimal_fields:
             field_content = row[decimal_field - 1]
-            if field_content == '':
+            if field_content == '' :
                 continue
 
-            if not field_content.replace(flat_file_object.structure.decimal_sep,'').isdigit():
+            if not field_content.replace(flat_file_object.structure.decimal_sep, '').isdigit():
                 step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(decimal_field) +
-                                                 " should be numeric with separator '" + field_content + "'"
-                                                 , os.path.basename(flat_file_object.filename))
+                                                 " should be numeric with separator '" + field_content
+                                                 + "'. Row type '" + row_type + "'.",
+                                                 os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
 
@@ -216,7 +230,8 @@ def check_fixed_values(flat_file_object):
 
         if len(row) != row_struct.length:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length)
+                                             + ". Row type '" + row_type + "'.",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -227,8 +242,9 @@ def check_fixed_values(flat_file_object):
                 continue
 
             if field_content != fixed_value[1]:
-                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(fixed_value[0]) +
-                                                 "should be '" + fixed_value[1] + "' instead of '" + field_content + "'."
-                                                 , os.path.basename(flat_file_object.filename))
+                step_result = TestCaseStepResult(idx + 1, False, 'FIELD_FORMAT_ERROR', "Field " + str(fixed_value[0])
+                                                 + "should be '" + fixed_value[1] + "' instead of '" + field_content
+                                                 + "'. Row type '" + row_type + "'.",
+                                                 os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result

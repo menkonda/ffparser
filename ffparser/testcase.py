@@ -129,11 +129,11 @@ class TestCase:
                       + flat_file_object.structure.name + "'"
                 raise TestExecException(msg, flat_file_object.filename, self.test_name)
 
-        try:
-            tc_result = self.test_method(flat_file_object)
-        except Exception as err:
-            msg = err.args[0] + ". Error during execution of test " + self.test_name
-            raise TestExecException(msg, flat_file_object.filename, self.test_name)
+        # try:
+        tc_result = self.test_method(flat_file_object)
+        # except Exception as err:
+        #     msg = err.args[0] + ". Error during execution of test " + self.test_name
+        #     raise TestExecException(msg, flat_file_object.filename, self.test_name)
 
         return tc_result
 

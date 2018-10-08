@@ -163,7 +163,7 @@ def main():
     try:
         config_obj = structure.get_structures_from_dir(args.config_dir)
     except (structure.StructureParseException, structure.RowStructureParseException) as err:
-        output_csv.writerow([err.src_file,'','False','JSON_STRUCTURES_ERROR', err.args[0]])
+        output_csv.writerow([err.src_file, '', 'False', 'JSON_STRUCTURES_ERROR', err.args[0]])
         print(err.args[0])
         return -1
 

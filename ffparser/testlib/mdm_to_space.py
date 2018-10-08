@@ -9,11 +9,11 @@ def mdm_to_space_check_quotes(flat_file_object):
     :return:
     """
     result = TestCaseResult()
-    lines = open(flat_file_object.filename,"r").readlines()
+    lines = open(flat_file_object.filename, "r").readlines()
     for idx, row in enumerate(lines):
-        row = row.replace(flat_file_object.structure.carriage_return,"")
+        row = row.replace(flat_file_object.structure.carriage_return, "")
         row = row.split(flat_file_object.structure.sep)
-        row_type = row[flat_file_object.structure.type_pos - 1].replace("\"","")
+        row_type = row[flat_file_object.structure.type_pos - 1].replace("\"", "")
 
         row_struct = flat_file_object.get_row_structure_from_type(row_type)
         if type(row_struct).__name__ == 'str':

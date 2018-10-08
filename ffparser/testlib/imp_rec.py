@@ -21,7 +21,8 @@ def imp_rec_check_required(flat_file_object):
 
         if len(row) != row_struct.length:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(row_struct.length),
+                                             + str(len(row)) + " fields instead of " + str(row_struct.length)
+                                              + ". Row type '" + row_type + "'.",
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
             continue
@@ -36,6 +37,7 @@ def imp_rec_check_required(flat_file_object):
 
             if row[pos] == "":
                 step_result = TestCaseStepResult(idx + 1, False, 'REQUIRED_FIELD', "Missing required field at position "
-                                                 + str(pos + 1), os.path.basename(flat_file_object.filename))
+                                                 + str(pos + 1) + ". Row type '" + row_type + "'.",
+                                                 os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result

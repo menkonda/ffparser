@@ -1,6 +1,7 @@
 from ffparser.testcase import TestCaseStepResult, TestCaseResult
 import os.path
 
+
 def imp_article_filename_field(flat_file_object):
     """
     Check that all the fields YNOMFIC are correctly filled
@@ -17,6 +18,7 @@ def imp_article_filename_field(flat_file_object):
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
     return result
+
 
 def imp_article_check_cug_length(flat_file_object):
     """
@@ -46,6 +48,7 @@ def imp_article_check_cug_length(flat_file_object):
                                                  os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
+
 
 def imp_article_check_ean_length(flat_file_object):
     """
