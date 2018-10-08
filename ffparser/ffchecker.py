@@ -22,6 +22,9 @@ class FlatFile(object):
         :param file: file object of the file to be treated
         :param file_structure: file structure used to parse the file
         """
+        if type(file).__name__ == 'str':
+            file = open(file, 'r', encoding=file_structure.encoding)
+
         self.structure = file_structure
         self.filename = file.name
         # if the file structure is not csv
@@ -38,6 +41,9 @@ class FlatFile(object):
                 # which start and stop positions are defined in the structure object
                 row_type = raw_row[self.structure.type_limits[0] - 1:self.structure.type_limits[1]]
                 row_structure = self.get_row_structure_from_type(row_type)
+                if type(row_structure).__name__ == 'str':
+                    raise structure.RowStructureParseException(row_structure)
+
                 for length in row_structure.lengths:
                     # appends a field starting with the current position and ending at field length
                     row.append(raw_row[line_index:line_index + length])
