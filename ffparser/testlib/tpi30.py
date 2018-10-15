@@ -12,9 +12,9 @@ def tpi30_check_ean_length(flat_file_object):
     available_ean_lengths = [13]
     cug_ean_fields = [4]
     for idx, row in enumerate(flat_file_object.rows):
-        if len(row) != 70:
+        if len(row) != 66:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(70),
+                                             + str(len(row)) + " fields instead of " + str(66),
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
 
@@ -42,9 +42,9 @@ def tpi30_check_cug_length(flat_file_object):
     available_cug_lengths = [6, 9]
     cug_field_nrs = [3]
     for idx, row in enumerate(flat_file_object.rows):
-        if len(row) != 70:
+        if len(row) != 66:
             step_result = TestCaseStepResult(idx + 1, False, 'ROW_STRUCT_ERROR', "Wrong number or fields for this row. "
-                                             + str(len(row)) + " fields instead of " + str(70),
+                                             + str(len(row)) + " fields instead of " + str(66),
                                              os.path.basename(flat_file_object.filename))
             result.steps.append(step_result)
 

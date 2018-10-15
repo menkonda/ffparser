@@ -125,6 +125,52 @@ class FlatFile(object):
         return self.parse_groups().keys()
 
 
+class ImpArticleFlatFile(FlatFile):
+    TCLCOD = 1
+    ITMSTA = 2
+    ITMREF = 3
+    DES1A01 = 4
+    SEAKEY = 5
+    EANCOD = 6
+    EECGES = 7
+    CUSREF = 8
+    TSICOD1 = 9
+    TSICOD2 = 10
+    STOMGTCOD = 11
+    STU = 12
+    WEU = 13
+    ITMWEI = 14
+    EEU = 15
+    EEUSTUCOE = 16
+    VACITM1 = 17
+    CCE2 = 18
+    DIE2 = 19
+    RCPFLG = 20
+    STAFED = 21
+    YSISOURCE = 22
+    YNOMFIC = 23
+    YDATFIC = 24
+
+    def __init__(self, file, file_structure=None):
+        if file_structure is None:
+            gconf = config.GlobalConfig(config.GLOBAL_CONFIG_PATH)
+            file_structure = structure.get_structure_from_json(os.path.join(gconf.structures_dir, 'struct_IMP_ARTICLE.json'))
+
+        super().__init__(file, file_structure)
+
+    def list_skus(self):
+        return [row[self.ITMREF] for row in self.rows]
+
+    def get_rows_by_sku(self, sku):
+        return [row for row in self.rows if row[self.ITMREF] == str(sku)]
+
+    def get_rows_by_ean(self, ean):
+        return [row for row in self.rows if row[self.EANCOD] == str(ean)]
+
+    def get_rows_by_parent_sku(self, parent_sku):
+        return [row for row in self.rows if row[self.SEAKEY] == str(parent_sku)]
+
+
 def main():
     parser = argparse.ArgumentParser(description='Check a csv file structure')
     parser.add_argument('csv_files', metavar='FILES', nargs='+',

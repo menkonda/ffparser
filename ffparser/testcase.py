@@ -7,6 +7,17 @@ import inspect
 import json
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class TestExecException(Exception):
     def __init__(self, msg, filename, test_name):
         Exception.__init__(self, msg)
@@ -17,8 +28,8 @@ class TestExecException(Exception):
 
 def list_available_tests(plugin_dirs=None):
     """
-    Lists all available test cases
-    :param plugin_dirs:
+    Lists all available test cases in ffparser.testlib submodules and plugin directories
+    :param plugin_dirs:  a list of directories that may contain plugins
     :return: Test names as a list of strings
     """
     tests = []
@@ -39,6 +50,13 @@ def list_available_tests(plugin_dirs=None):
 
 
 def get_test_callable_by_name(test_name, plugin_dirs=None):
+    """
+    Retrieve a callable function from name in in ffparser.testlib submodules and plugin directories. If not found raise
+    an exception
+    :param test_name: name of the test as a string
+    :param plugin_dirs: a list of directories that may contain plugins
+    :return: a callable function
+    """
     if test_name not in (list_available_tests(plugin_dirs)):
         raise Exception("Could not find the test " + test_name + " in modules")
 
@@ -62,6 +80,11 @@ def get_test_callable_by_name(test_name, plugin_dirs=None):
 
 
 def get_test_case_config_from_name(test_name):
+    """
+    Retrieve the test case config from name. A config give te information on the applicability of a test
+    :param test_name: Name of the tesy
+    :return: A TestCase Config object
+    """
     global_config = GlobalConfig(GLOBAL_CONFIG_PATH)
     test_confs_path = global_config.test_configs
     with open(test_confs_path, 'r') as test_confs_file:
@@ -73,11 +96,30 @@ def get_test_case_config_from_name(test_name):
         test_conf_dict = [conf for conf in test_confs_dict if conf['test_conf_name'] == test_name][0]
 
     return TestCaseConf(test_conf_dict)
-    
+
+
+def display_test_cases(plugin_dirs=None):
+    test_cases = list_available_tests(plugin_dirs=plugin_dirs)
+    for test_case in test_cases:
+        print(bcolors.BOLD + test_case + bcolors.ENDC, ":")
+        print("\t", get_test_callable_by_name(test_case).__doc__)
+        for line in get_test_case_config_from_name(test_case).__str__().split('\n'):
+            print("\t", line)
+
 
 class TestCaseConf:
     def __init__(self, tc_conf_dict):
-        required_keys = ['test_conf_name','allowed_file_types','allowed_structures','required_structure_fields','required_row_fields']
+        """
+        Init a TestCase conf object. The required information are:
+        - name of the test configuration
+        - whether the test is available for csv or positional files
+        - which structures the test applies to
+        - which fields are required in the field structure for the test to work
+        - which fields are required in the row structure for the test to work
+        :param tc_conf_dict: a dictionary with the test cases parameters
+        """
+        required_keys = ['test_conf_name', 'allowed_file_types', 'allowed_structures', 'required_structure_fields',
+                         'required_row_fields']
         available_keys = [key for key in tc_conf_dict]
 
         if not set(required_keys).issubset(available_keys):
@@ -87,6 +129,13 @@ class TestCaseConf:
 
         for key in available_keys:
             self.__dict__ [key] = tc_conf_dict[key]
+
+    def __str__(self):
+        output = ""
+        for key in self.__dict__:
+            output += key + " : " + repr(self.__dict__[key]) + "\n"
+
+        return output
 
 
 class TestCase:
@@ -212,3 +261,7 @@ class TestSuiteResult(object):
             for step in tc.steps:
                 csv_writer.writerow([step.filename, str(step.line_number),  str(step.status),
                                      step.error_type, step.message])
+
+
+if __name__ == "__main__":
+    display_test_cases()
