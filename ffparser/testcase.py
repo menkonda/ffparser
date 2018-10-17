@@ -259,6 +259,7 @@ class TestSuiteResult(object):
 
     def to_csv(self, file):
         csv_writer = csv.writer(file, delimiter=';', quotechar="\"")
+        csv_writer.writerow(['TEST_NAME', 'FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
         for tc in self.tcs:
             for step in tc.steps:
                 csv_writer.writerow([tc.tc_name, step.filename, str(step.line_number),  str(step.status),

@@ -207,9 +207,7 @@ def main():
         return -2
 
     output_csv = csv.writer(output_file, delimiter=';', quotechar="\"")
-    output_csv.writerow(['FILENAME', 'LINE_NUMBER', 'STATUS', 'ERROR_TYPE', 'MESSAGE'])
 
-    
     try:
         config_obj = structure.get_structures_from_dir(args.config_dir)
     except (structure.StructureParseException, structure.RowStructureParseException) as err:
