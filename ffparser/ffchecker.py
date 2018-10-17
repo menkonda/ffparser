@@ -23,36 +23,40 @@ class FlatFile(object):
         :param file_structure: file structure used to parse the file
         """
         if type(file).__name__ == 'str':
-            file = open(file, 'r', encoding=file_structure.encoding)
-
+            self.file = open(file, 'r', encoding=file_structure.encoding)
+        else:
+            self.file = file
         self.structure = file_structure
-        self.filename = file.name
+        self.filename = self.file.name
         # if the file structure is not csv
         if file_structure.conf_type == 'csv':
-            rows = list(csv.reader(file, delimiter=self.structure.sep, quotechar="\""))
+            rows = list(csv.reader(self.file, delimiter=self.structure.sep, quotechar="\""))
         elif file_structure.conf_type == 'pos':
-            # strip is used to remove carriage return
-            raw_rows = [line.rstrip() for line in file]
-            rows = []
-            for idx, raw_row in enumerate(raw_rows):
-                row = []
-                line_index = 0
-                # to correctly cut the fields we need to refer to the correct row structure. For this we use a line type
-                # which start and stop positions are defined in the structure object
-                row_type = raw_row[self.structure.type_limits[0] - 1:self.structure.type_limits[1]]
-                row_structure = self.get_row_structure_from_type(row_type)
-                if type(row_structure).__name__ == 'str':
-                    raise structure.RowStructureParseException(row_structure)
-
-                for length in row_structure.lengths:
-                    # appends a field starting with the current position and ending at field length
-                    row.append(raw_row[line_index:line_index + length])
-                    line_index = line_index + length
-                rows.append(row)
+            rows = self.get_rows_from_pos()
         else:
             raise Exception("Structure conf_type must be 'pos' or 'csv'. Not " + file_structure.conf_type)
 
         self.rows = rows
+
+    def get_rows_from_pos(self):
+        raw_rows = [line.rstrip() for line in self.file]
+        rows = []
+        for idx, raw_row in enumerate(raw_rows):
+            row = []
+            line_index = 0
+            # to correctly cut the fields we need to refer to the correct row structure. For this we use a line type
+            # whom start and stop positions are defined in the structure object
+            row_type = raw_row[self.structure.type_limits[0] - 1:self.structure.type_limits[1]]
+            row_structure = self.get_row_structure_from_type(row_type)
+            if type(row_structure).__name__ == 'str':
+                raise structure.RowStructureParseException(row_structure)
+
+            for length in row_structure.lengths:
+                # appends a field starting with the current position and ending at field length
+                row.append(raw_row[line_index:line_index + length])
+                line_index = line_index + length
+            rows.append(row)
+        return rows
 
     def get_row_structure_from_type(self, row_type):
         """

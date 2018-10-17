@@ -123,7 +123,7 @@ class TestCaseConf:
         available_keys = [key for key in tc_conf_dict]
 
         if not set(required_keys).issubset(available_keys):
-            missing_fields  = ["'" + key + "'"for key in required_keys if key not in available_keys]
+            missing_fields = ["'" + key + "'"for key in required_keys if key not in available_keys]
             msg = "Missing " + ", ".join(missing_fields) + " information to build test case configuration."
             raise Exception(msg)
 
@@ -180,6 +180,7 @@ class TestCase:
 
         # try:
         tc_result = self.test_method(flat_file_object)
+        tc_result.tc_name = self.test_name
         # except Exception as err:
         #     msg = err.args[0] + ". Error during execution of test " + self.test_name
         #     raise TestExecException(msg, flat_file_object.filename, self.test_name)
@@ -188,15 +189,16 @@ class TestCase:
 
 
 class TestCaseStepResult(object):
-    def __init__(self, line_number, status, error_type, message, filename=""):
+    def __init__(self, line_number, status, error_type, message, filename="", tc_name=""):
         self.status = status
         self.error_type = error_type
         self.message = message
         self.filename = filename
         self.line_number = line_number
+        self.tc_name = tc_name
 
     def __str__(self):
-        return self.filename + ";line " + str(self.line_number) + ";" + str(self.status) + ";" \
+        return self.filename + ";" + ";line " + str(self.line_number) + ";" + str(self.status) + ";" \
                + self.error_type + ";" + self.message
 
 
@@ -259,7 +261,7 @@ class TestSuiteResult(object):
         csv_writer = csv.writer(file, delimiter=';', quotechar="\"")
         for tc in self.tcs:
             for step in tc.steps:
-                csv_writer.writerow([step.filename, str(step.line_number),  str(step.status),
+                csv_writer.writerow([tc.tc_name, step.filename, str(step.line_number),  str(step.status),
                                      step.error_type, step.message])
 
 
