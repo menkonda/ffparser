@@ -60,3 +60,21 @@ def tpi30_check_cug_length(flat_file_object):
                                                  os.path.basename(flat_file_object.filename))
                 result.steps.append(step_result)
     return result
+
+
+def tpi30_check_special_caracters(flat_file_object):
+    result = TestCaseResult()
+
+    lines = open(flat_file_object.filename, "r").readlines()
+    special_characters = flat_file_object.structure.row_structures[0].special_characters
+    for idx, line in enumerate(lines):
+        for special_character in special_characters:
+            if special_character in line:
+                error_type = "SPECIAL_CHARACTER_ERROR"
+                msg = "Forbidden character '" + special_character + "' at position '" + \
+                      str(line.index(special_character) + 1) + "' of row " + str(idx + 1) + "."
+                file_under_test = os.path.basename(flat_file_object.filename)
+                step_result = TestCaseStepResult(idx + 1, False, error_type, msg, file_under_test)
+                result.steps.append(step_result)
+
+    return result
